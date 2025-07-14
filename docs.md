@@ -1,6 +1,6 @@
 # On-Device SQLite Integration – Engineering Notes
 
-_Last updated: <!-- TIMESTAMP_PLACEHOLDER -->_
+_Last updated: 2025-07-14 15:30 UTC_
 
 ## 1. Codebase Snapshot
 
@@ -73,3 +73,11 @@ Feel free to append new observations below this line; maintain reverse-chronolog
 
 ### 2025-07-14 – Initial Audit
 • No DB present. Planning outlined above.
+### 2025-07-14 – PoC Setup in Progress
+• Installed deps: `sql.js`, `drizzle-orm`.
+• Created `/database/client.ts` – opens in-memory SQLite via sql.js WASM + Drizzle ORM.
+• Added `/database/schema.ts` defining `family_member` table.
+• Added `/database/seed.ts` with `seedFamilyMembers()` inserting sample data mirroring in-memory arrays.
+• Implemented auto table creation & seeding logic in `database/client.ts` and added DAO `lib/data/dao/familyMember.dao.ts` + `lib/data/repository.ts`.
+
+Next: Hook DAO into existing `FamilyCalendarModel` and fetch data from DB instead of arrays.
