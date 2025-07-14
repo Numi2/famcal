@@ -109,7 +109,7 @@ export default function FamilyCalendarHome() {
           <span className="text-lg md:text-2xl font-semibold text-white drop-shadow-lg">Family Calendar</span>
           <div className="hidden sm:flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-2 md:px-3 py-1">
             <Heart className="h-3 w-3 md:h-4 md:w-4 text-pink-300" />
-            <span className="text-xs md:text-sm text-white">AI-Powered</span>
+          
           </div>
         </div>
 
@@ -118,7 +118,7 @@ export default function FamilyCalendarHome() {
             onClick={() => setShowDashboard(!showDashboard)}
             className="px-2 md:px-4 py-1 md:py-2 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors flex items-center gap-1 md:gap-2 text-sm md:text-base"
           >
-            <div className="h-3 w-3 md:h-4 md:w-4" />
+            <div className="h-2 w-2 md:h-3 md:w-3" />
             <span className="hidden sm:inline">Dashboard</span>
           </button>
           <div className="relative hidden md:block">
