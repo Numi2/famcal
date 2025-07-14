@@ -27,6 +27,8 @@ import MobileSidebarOverlay from "@/components/ui/mobile-sidebar-overlay"
 import AdaptiveStats from "@/components/family-dashboard/adaptive-stats"
 import ResponsiveQuickActions from "@/components/family-dashboard/responsive-quick-actions"
 import ChildrenOverview from "@/components/family-dashboard/children-overview"
+import AuthModal from "@/components/auth/auth-modal"
+import { useAuth } from "@/lib/auth/auth-context"
 
 export default function FamilyCalendarHome() {
   const [isLoaded, setIsLoaded] = useState(false)
@@ -40,6 +42,7 @@ export default function FamilyCalendarHome() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [showMobileSidebar, setShowMobileSidebar] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
 
   // Family data
   const [familyMembers, setFamilyMembers] = useState([])
@@ -47,6 +50,9 @@ export default function FamilyCalendarHome() {
   const [familyInsights, setFamilyInsights] = useState([])
   const [todayMeals, setTodayMeals] = useState([])
   const [pendingChores, setPendingChores] = useState([])
+
+  // Add auth hook
+  const { user, loading: authLoading } = useAuth()
 
   useEffect(() => {
     setIsLoaded(true)
@@ -120,7 +126,18 @@ export default function FamilyCalendarHome() {
     <div className="p-3 md:p-4 flex flex-col h-full overflow-hidden">
       {/* Quick Actions */}
       <div className="mb-4 md:mb-6 flex-shrink-0">
-        <button className="mb-3 md:mb-4 flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 px-3 md:px-4 py-2 md:py-3 text-white w-full hover:from-pink-600 hover:to-purple-700 transition-all text-sm md:text-base">
+        <button
+          onClick={() => {
+            if (user) {
+              // User is authenticated, show add event form
+              console.log("Show add event form")
+            } else {
+              // User not authenticated, show auth modal
+              setShowAuthModal(true)
+            }
+          }}
+          className="mb-3 md:mb-4 flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 px-3 md:px-4 py-2 md:py-3 text-white w-full hover:from-pink-600 hover:to-purple-700 transition-all text-sm md:text-base"
+        >
           <Plus className="h-4 w-4 md:h-5 md:w-5" />
           <span>Add</span>
         </button>
@@ -332,7 +349,6 @@ export default function FamilyCalendarHome() {
           <span className="text-lg md:text-2xl font-semibold text-white drop-shadow-lg">Family Calendar</span>
           <div className="hidden sm:flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-2 md:px-3 py-1">
             <Heart className="h-3 w-3 md:h-4 md:w-4 text-pink-300" />
-          
           </div>
         </div>
 
@@ -576,6 +592,8 @@ export default function FamilyCalendarHome() {
           </div>
         </div>
       )}
+      {/* Auth Modal */}
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} initialMode="signup" />
     </div>
   )
 }
