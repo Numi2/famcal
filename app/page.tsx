@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { getUserDb } from "@/database/userDb"
 import Image from "next/image"
 import {
   ChevronLeft,
@@ -21,6 +23,7 @@ import {
 } from "lucide-react"
 import { FamilyCalendarController } from "@/lib/family/controller"
 import { FamilyCalendarPresenter } from "@/lib/family/presenter"
+import { getFamilyMembersFromDb } from "@/lib/data/repository"
 import CollapsibleResizableSidebar from "@/components/ui/collapsible-resizable-sidebar"
 import CollapsedSidebarContent from "@/components/family-dashboard/collapsed-sidebar-content"
 import MobileSidebarOverlay from "@/components/ui/mobile-sidebar-overlay"
@@ -29,6 +32,7 @@ import ResponsiveQuickActions from "@/components/family-dashboard/responsive-qui
 import ChildrenOverview from "@/components/family-dashboard/children-overview"
 
 export default function FamilyCalendarHome() {
+  const router = useRouter()
   const [isLoaded, setIsLoaded] = useState(false)
   const [currentView, setCurrentView] = useState("week")
   const [currentMonth, setCurrentMonth] = useState("March 2025")
@@ -49,9 +53,36 @@ export default function FamilyCalendarHome() {
   const [pendingChores, setPendingChores] = useState([])
 
   useEffect(() => {
-    setIsLoaded(true)
+    // Check user onboarding
+    const storedUserId = typeof window !== "undefined" ? localStorage.getItem("familyUserId") : null
+    if (!storedUserId) {
+      router.replace("/onboarding")
+      return
+    }
 
-    // Check if mobile
+    // ensure database initialized
+    getUserDb(storedUserId).then(() => {
+      // Load family data after DB ready
+      getFamilyMembersFromDb().then((dbMembers) => {
+        const members = FamilyCalendarPresenter.formatFamilyMembers(dbMembers)
+        setFamilyMembers(members)
+      })
+
+      // note: other entities still from in-memory for now
+      const events = FamilyCalendarPresenter.getFormattedFamilyEventsByDay(2) // Monday
+      const insights = FamilyCalendarPresenter.getFormattedFamilyInsights()
+      const meals = FamilyCalendarPresenter.formatMealPlans(FamilyCalendarController.getMealPlansByDay(2))
+      const chores = FamilyCalendarPresenter.formatChoreAssignments(FamilyCalendarController.getPendingChores())
+
+      setFamilyEvents(events)
+      setFamilyInsights(insights)
+      setTodayMeals(meals)
+      setPendingChores(chores)
+
+      setIsLoaded(true)
+    })
+
+    // Check if mobile (moved inside)
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
     }
@@ -59,19 +90,7 @@ export default function FamilyCalendarHome() {
     checkMobile()
     window.addEventListener("resize", checkMobile)
 
-    // Load family data
-    const members = FamilyCalendarPresenter.formatFamilyMembers(FamilyCalendarController.getFamilyMembers())
-    const events = FamilyCalendarPresenter.getFormattedFamilyEventsByDay(2) // Monday
-    const insights = FamilyCalendarPresenter.getFormattedFamilyInsights()
-    const meals = FamilyCalendarPresenter.formatMealPlans(FamilyCalendarController.getMealPlansByDay(2))
-    const chores = FamilyCalendarPresenter.formatChoreAssignments(FamilyCalendarController.getPendingChores())
-
-    setFamilyMembers(members)
-    setFamilyEvents(events)
-    setFamilyInsights(insights)
-    setTodayMeals(meals)
-    setPendingChores(chores)
-
+    // Load family data after db ready handled in callback above
     return () => window.removeEventListener("resize", checkMobile)
   }, [])
 

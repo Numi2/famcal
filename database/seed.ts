@@ -1,8 +1,6 @@
-import { getDb } from "./client"
 import { familyMember } from "./schema"
 
-export async function seedFamilyMembers() {
-  const db = await getDb()
+export async function seedFamilyMembers(db: any) {
 
   // Clear existing rows
   await db.delete(familyMember).run()
@@ -51,8 +49,4 @@ export async function seedFamilyMembers() {
     .run()
 }
 
-// For ad-hoc execution (Node environment), you could
-// (async () => {
-//   await seedFamilyMembers()
-//   console.log("Seeded family members")
-// })()
+// For ad-hoc execution removed context
