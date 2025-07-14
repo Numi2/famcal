@@ -7,8 +7,8 @@ import FamilyCalendarAssistant from "@/components/ai-assistant/chat-ui"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Lovy-tech | Family Calendar",
-  description: "AI-powered family calendar to help families with small children organize their lives",
+  title: "Family Calendar",
+  description: "make the most of your families time <3",
     generator: 'v0.dev'
 }
 
