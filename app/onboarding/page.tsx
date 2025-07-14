@@ -7,21 +7,24 @@ import { getUserDb } from "@/database/userDb"
 export default function OnboardingPage() {
   const [name, setName] = useState("")
   const router = useRouter()
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
 
-    // generate userId (very simple)
+    setLoading(true)
     const userId = `${name.trim().toLowerCase().replace(/\s+/g, "_")}_${Date.now()}`
+
     if (typeof window !== "undefined") {
       localStorage.setItem("familyUserId", userId)
       localStorage.setItem("familyUserName", name.trim())
     }
-    // create DB for user
-    await getUserDb(userId)
 
-    router.push("/")
+    // Kick off DB creation but don't block navigation
+    getUserDb(userId).catch(console.error)
+
+    router.replace("/")
   }
 
   return (
@@ -44,8 +47,9 @@ export default function OnboardingPage() {
         <button
           type="submit"
           className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 rounded-lg transition-colors"
+          disabled={loading}
         >
-          Continue
+          {loading ? "Setting up…" : "Continue"}
         </button>
       </form>
     </div>

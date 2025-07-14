@@ -81,6 +81,7 @@ Feel free to append new observations below this line; maintain reverse-chronolog
 • Implemented auto table creation & seeding logic in `database/client.ts` and added DAO `lib/data/dao/familyMember.dao.ts` + `lib/data/repository.ts`.
 • Implemented per-user DB loader (`database/userDb.ts`) storing serialized SQLite in `localStorage` keyed by `familyDb_${userId}`. Seeds default data on first launch, provides `persist` helper.
 • Added simple client-side onboarding screen at `/onboarding` that captures user name → generates `userId`, saves to `localStorage`, creates DB.
+• Onboarding UX: made submit button async-friendly (shows "Setting up…"), triggers `router.replace('/')` immediately and runs `getUserDb` in background to avoid perceived freeze.
 • Root page now guards against missing `familyUserId` and redirects to onboarding; upon DB ready, loads family members from database via new repository.
 
 Next: Hook DAO into existing `FamilyCalendarModel` and fetch data from DB instead of arrays.
