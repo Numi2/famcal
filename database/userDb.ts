@@ -1,5 +1,5 @@
 import initSqlJs from "sql.js"
-import { drizzle } from "drizzle-orm/sqlite-wasm"
+import { drizzle } from "drizzle-orm/sql-js"
 import * as schema from "./schema"
 import { seedFamilyMembers } from "./seed"
 

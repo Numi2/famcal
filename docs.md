@@ -84,3 +84,4 @@ Feel free to append new observations below this line; maintain reverse-chronolog
 • Root page now guards against missing `familyUserId` and redirects to onboarding; upon DB ready, loads family members from database via new repository.
 
 Next: Hook DAO into existing `FamilyCalendarModel` and fetch data from DB instead of arrays.
+• Fixed build errors by switching Drizzle driver import to `drizzle-orm/sql-js` and stubbing Node core modules (`fs`, `path`) in `next.config.mjs`.

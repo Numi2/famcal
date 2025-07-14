@@ -1,6 +1,7 @@
 import initSqlJs from "sql.js"
-import { drizzle } from "drizzle-orm/sqlite-wasm"
+import { drizzle } from "drizzle-orm/sql-js"
 import * as schema from "./schema"
+import { seedFamilyMembers } from "./seed"
 
 // NOTE: sql.js expects to fetch its wasm file; using CDN for PoC.
 const locateFile = (file: string) => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
@@ -24,10 +25,8 @@ export async function getDb() {
   );`)
   dbPromise = drizzle(sqliteDb, { schema })
 
-  // Seed sample data once (idempotent insert)
-  import("./seed").then(({ seedFamilyMembers }) => {
-    seedFamilyMembers().catch(console.error)
-  })
+  // Seed sample data once (idempotent)
+  seedFamilyMembers(dbPromise).catch(console.error)
 
   return dbPromise
 }
