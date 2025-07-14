@@ -21,7 +21,9 @@ import {
 } from "lucide-react"
 import { FamilyCalendarController } from "@/lib/family/controller"
 import { FamilyCalendarPresenter } from "@/lib/family/presenter"
-import ResizableSidebar from "@/components/ui/resizable-sidebar"
+import CollapsibleResizableSidebar from "@/components/ui/collapsible-resizable-sidebar"
+import CollapsedSidebarContent from "@/components/family-dashboard/collapsed-sidebar-content"
+import MobileSidebarOverlay from "@/components/ui/mobile-sidebar-overlay"
 import AdaptiveStats from "@/components/family-dashboard/adaptive-stats"
 import ResponsiveQuickActions from "@/components/family-dashboard/responsive-quick-actions"
 import ChildrenOverview from "@/components/family-dashboard/children-overview"
@@ -35,6 +37,9 @@ export default function FamilyCalendarHome() {
   const [activeTab, setActiveTab] = useState("calendar")
   const [showDashboard, setShowDashboard] = useState(false)
   const [sidebarWidth, setSidebarWidth] = useState(320)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   // Family data
   const [familyMembers, setFamilyMembers] = useState([])
@@ -45,6 +50,14 @@ export default function FamilyCalendarHome() {
 
   useEffect(() => {
     setIsLoaded(true)
+
+    // Check if mobile
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
 
     // Load family data
     const members = FamilyCalendarPresenter.formatFamilyMembers(FamilyCalendarController.getFamilyMembers())
@@ -58,10 +71,24 @@ export default function FamilyCalendarHome() {
     setFamilyInsights(insights)
     setTodayMeals(meals)
     setPendingChores(chores)
+
+    return () => window.removeEventListener("resize", checkMobile)
   }, [])
 
   const handleEventClick = (event) => {
     setSelectedEvent(event)
+  }
+
+  const handleSidebarWidthChange = (width: number) => {
+    setSidebarWidth(width)
+  }
+
+  const handleSidebarCollapseChange = (collapsed: boolean) => {
+    setSidebarCollapsed(collapsed)
+  }
+
+  const toggleMobileSidebar = () => {
+    setShowMobileSidebar(!showMobileSidebar)
   }
 
   // Calendar days for the week view
@@ -88,6 +115,197 @@ export default function FamilyCalendarHome() {
   const children = familyMembers.filter((member) => member.role === "child")
   const parents = familyMembers.filter((member) => member.role === "parent")
 
+  // Sidebar content component
+  const SidebarContent = () => (
+    <div className="p-3 md:p-4 flex flex-col h-full overflow-hidden">
+      {/* Quick Actions */}
+      <div className="mb-4 md:mb-6 flex-shrink-0">
+        <button className="mb-3 md:mb-4 flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 px-3 md:px-4 py-2 md:py-3 text-white w-full hover:from-pink-600 hover:to-purple-700 transition-all text-sm md:text-base">
+          <Plus className="h-4 w-4 md:h-5 md:w-5" />
+          <span>Add</span>
+        </button>
+
+        {/* Tab Navigation */}
+        <div className="flex gap-1 mb-3 md:mb-4 bg-white/20 rounded-full p-1">
+          {[
+            { id: "calendar", icon: CalendarIcon, label: "Calendar" },
+            { id: "meals", icon: Utensils, label: "Meals" },
+            { id: "chores", icon: CheckSquare, label: "Chores" },
+            { id: "insights", icon: Lightbulb, label: "Insights" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 flex items-center justify-center gap-1 px-2 md:px-3 py-1 md:py-2 rounded-full text-xs transition-all ${
+                activeTab === tab.id ? "bg-white text-purple-600 shadow-sm" : "text-white hover:bg-white/10"
+              }`}
+            >
+              <tab.icon className="h-3 w-3" />
+              <span className="hidden sm:inline">{tab.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        {activeTab === "calendar" && (
+          <>
+            {/* Mini Calendar */}
+            <div className="mb-4 md:mb-6">
+              <div className="flex items-center justify-between mb-3 md:mb-4">
+                <h3 className="text-white font-medium text-sm md:text-base">{currentMonth}</h3>
+                <div className="flex gap-1">
+                  <button className="p-1 rounded-full hover:bg-white/20">
+                    <ChevronLeft className="h-3 w-3 md:h-4 md:w-4 text-white" />
+                  </button>
+                  <button className="p-1 rounded-full hover:bg-white/20">
+                    <ChevronRight className="h-3 w-3 md:h-4 md:w-4 text-white" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-7 gap-1 text-center">
+                {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
+                  <div key={i} className="text-xs text-white/70 font-medium py-1">
+                    {day}
+                  </div>
+                ))}
+
+                {miniCalendarDays.map((day, i) => (
+                  <div
+                    key={i}
+                    className={`text-xs rounded-full w-6 h-6 md:w-7 md:h-7 flex items-center justify-center ${
+                      day === 5 ? "bg-purple-500 text-white" : "text-white hover:bg-white/20"
+                    } ${!day ? "invisible" : ""}`}
+                  >
+                    {day}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Family Members */}
+            <div>
+              <h3 className="text-white font-medium mb-3 flex items-center gap-2 text-sm md:text-base">
+                <Users className="h-3 w-3 md:h-4 md:w-4" />
+                Family Members
+              </h3>
+              <div className="space-y-2 md:space-y-3">
+                {familyMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    className="flex items-center gap-2 md:gap-3 p-2 rounded-lg hover:bg-white/10 transition-colors"
+                  >
+                    <div
+                      className={`w-6 h-6 md:w-8 md:h-8 rounded-full ${member.color} flex items-center justify-center text-white text-xs md:text-sm font-bold shadow-sm flex-shrink-0`}
+                    >
+                      {member.name.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-white text-xs md:text-sm font-medium truncate">{member.displayName}</div>
+                      <div className="text-white/70 text-xs flex items-center gap-1">
+                        {member.roleIcon}
+                        {member.role === "child" && member.grade && <span className="truncate">{member.grade}</span>}
+                      </div>
+                    </div>
+                    <div className="text-xs text-white/60 flex-shrink-0">
+                      {FamilyCalendarController.getFamilyEventsByMember(member.id).length}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {activeTab === "meals" && (
+          <div>
+            <h3 className="text-white font-medium mb-3 flex items-center gap-2 text-sm md:text-base">
+              <Utensils className="h-3 w-3 md:h-4 md:w-4" />
+              Today's Meals
+            </h3>
+            {todayMeals.length > 0 ? (
+              <div className="space-y-2 md:space-y-3">
+                {todayMeals.map((meal) => (
+                  <div key={meal.id} className="bg-white/10 rounded-lg p-2 md:p-3">
+                    <div className="flex items-center gap-2 mb-1 md:mb-2">
+                      <span className="text-base md:text-lg">{meal.mealTypeIcon}</span>
+                      <span className="text-white font-medium capitalize text-xs md:text-sm">{meal.mealType}</span>
+                      <span className="text-xs">{meal.kidFriendlyIcon}</span>
+                    </div>
+                    <div className="text-white text-xs md:text-sm mb-1 line-clamp-2">{meal.meal}</div>
+                    <div className="text-white/70 text-xs">{meal.formattedPrepTime}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-white/70 text-xs md:text-sm text-center py-4">
+                No meals planned for today
+                <br />
+                <button className="text-purple-300 hover:text-purple-200 mt-2">Get meal suggestions →</button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "chores" && (
+          <div>
+            <h3 className="text-white font-medium mb-3 flex items-center gap-2 text-sm md:text-base">
+              <CheckSquare className="h-3 w-3 md:h-4 md:w-4" />
+              Pending Chores
+            </h3>
+            {pendingChores.length > 0 ? (
+              <div className="space-y-2 md:space-y-3">
+                {pendingChores.map((chore) => (
+                  <div key={chore.id} className="bg-white/10 rounded-lg p-2 md:p-3">
+                    <div className="flex items-center justify-between mb-1 md:mb-2">
+                      <span className="text-white text-xs md:text-sm font-medium line-clamp-1">{chore.chore}</span>
+                      <span className="text-xs flex-shrink-0">{chore.statusIcon}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-white/70 text-xs truncate">{chore.assignedMemberName}</span>
+                      <span className="text-purple-300 text-xs flex-shrink-0">{chore.pointsDisplay}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-white/70 text-xs md:text-sm text-center py-4">All chores completed! 🎉</div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "insights" && (
+          <div>
+            <h3 className="text-white font-medium mb-3 flex items-center gap-2 text-sm md:text-base">
+              <Lightbulb className="h-3 w-3 md:h-4 md:w-4" />
+              Family Insights
+            </h3>
+            {familyInsights.length > 0 ? (
+              <div className="space-y-2 md:space-y-3">
+                {familyInsights.slice(0, 3).map((insight) => (
+                  <div key={insight.id} className="bg-white/10 rounded-lg p-2 md:p-3">
+                    <div className="flex items-center gap-2 mb-1 md:mb-2">
+                      <span className="text-base md:text-lg flex-shrink-0">{insight.typeIcon}</span>
+                      <span className="text-white text-xs md:text-sm font-medium line-clamp-2">{insight.title}</span>
+                    </div>
+                    <div className="text-white/80 text-xs mb-1 md:mb-2 line-clamp-3">{insight.message}</div>
+                    {insight.actionable && (
+                      <button className="text-purple-300 hover:text-purple-200 text-xs">{insight.action} →</button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-white/70 text-xs md:text-sm text-center py-4">No insights available</div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
       {/* Background Image */}
@@ -105,7 +323,12 @@ export default function FamilyCalendarHome() {
         style={{ animationDelay: "0.2s" }}
       >
         <div className="flex items-center gap-2 md:gap-4">
-          <Menu className="h-5 w-5 md:h-6 md:w-6 text-white" />
+          <button
+            onClick={isMobile ? toggleMobileSidebar : undefined}
+            className="p-2 rounded-full hover:bg-white/20 transition-colors lg:hidden"
+          >
+            <Menu className="h-5 w-5 md:h-6 md:w-6 text-white" />
+          </button>
           <span className="text-lg md:text-2xl font-semibold text-white drop-shadow-lg">Family Calendar</span>
           <div className="hidden sm:flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-2 md:px-3 py-1">
             <Heart className="h-3 w-3 md:h-4 md:w-4 text-pink-300" />
@@ -143,6 +366,11 @@ export default function FamilyCalendarHome() {
         </div>
       </header>
 
+      {/* Mobile Sidebar Overlay */}
+      <MobileSidebarOverlay isOpen={showMobileSidebar} onClose={() => setShowMobileSidebar(false)}>
+        <SidebarContent />
+      </MobileSidebarOverlay>
+
       {/* Family Dashboard Overlay */}
       {showDashboard && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 flex items-start justify-center pt-16 md:pt-20 overflow-y-auto p-4">
@@ -166,214 +394,25 @@ export default function FamilyCalendarHome() {
 
       {/* Main Content */}
       <main className="relative h-screen w-full pt-16 md:pt-20 flex">
-        {/* Resizable Family Sidebar */}
-        <ResizableSidebar
-          defaultWidth={320}
-          minWidth={280}
-          maxWidth={500}
-          className={`h-full bg-white/10 backdrop-blur-lg shadow-xl border-r border-white/20 rounded-tr-3xl opacity-0 ${isLoaded ? "animate-fade-in" : ""}`}
-          style={{ animationDelay: "0.4s" }}
-        >
-          <div className="p-3 md:p-4 flex flex-col h-full overflow-hidden">
-            {/* Quick Actions */}
-            <div className="mb-4 md:mb-6 flex-shrink-0">
-              <button className="mb-3 md:mb-4 flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 px-3 md:px-4 py-2 md:py-3 text-white w-full hover:from-pink-600 hover:to-purple-700 transition-all text-sm md:text-base">
-                <Plus className="h-4 w-4 md:h-5 md:w-5" />
-                <span>Add</span>
-              </button>
-
-              {/* Tab Navigation */}
-              <div className="flex gap-1 mb-3 md:mb-4 bg-white/20 rounded-full p-1">
-                {[
-                  { id: "calendar", icon: CalendarIcon, label: "Calendar" },
-                  { id: "meals", icon: Utensils, label: "Meals" },
-                  { id: "chores", icon: CheckSquare, label: "Chores" },
-                  { id: "insights", icon: Lightbulb, label: "Insights" },
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 flex items-center justify-center gap-1 px-2 md:px-3 py-1 md:py-2 rounded-full text-xs transition-all ${
-                      activeTab === tab.id ? "bg-white text-purple-600 shadow-sm" : "text-white hover:bg-white/10"
-                    }`}
-                  >
-                    <tab.icon className="h-3 w-3" />
-                    <span className="hidden sm:inline">{tab.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Tab Content */}
-            <div className="flex-1 overflow-y-auto min-h-0">
-              {activeTab === "calendar" && (
-                <>
-                  {/* Mini Calendar */}
-                  <div className="mb-4 md:mb-6">
-                    <div className="flex items-center justify-between mb-3 md:mb-4">
-                      <h3 className="text-white font-medium text-sm md:text-base">{currentMonth}</h3>
-                      <div className="flex gap-1">
-                        <button className="p-1 rounded-full hover:bg-white/20">
-                          <ChevronLeft className="h-3 w-3 md:h-4 md:w-4 text-white" />
-                        </button>
-                        <button className="p-1 rounded-full hover:bg-white/20">
-                          <ChevronRight className="h-3 w-3 md:h-4 md:w-4 text-white" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-7 gap-1 text-center">
-                      {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
-                        <div key={i} className="text-xs text-white/70 font-medium py-1">
-                          {day}
-                        </div>
-                      ))}
-
-                      {miniCalendarDays.map((day, i) => (
-                        <div
-                          key={i}
-                          className={`text-xs rounded-full w-6 h-6 md:w-7 md:h-7 flex items-center justify-center ${
-                            day === 5 ? "bg-purple-500 text-white" : "text-white hover:bg-white/20"
-                          } ${!day ? "invisible" : ""}`}
-                        >
-                          {day}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Family Members */}
-                  <div>
-                    <h3 className="text-white font-medium mb-3 flex items-center gap-2 text-sm md:text-base">
-                      <Users className="h-3 w-3 md:h-4 md:w-4" />
-                      Family Members
-                    </h3>
-                    <div className="space-y-2 md:space-y-3">
-                      {familyMembers.map((member) => (
-                        <div
-                          key={member.id}
-                          className="flex items-center gap-2 md:gap-3 p-2 rounded-lg hover:bg-white/10 transition-colors"
-                        >
-                          <div
-                            className={`w-6 h-6 md:w-8 md:h-8 rounded-full ${member.color} flex items-center justify-center text-white text-xs md:text-sm font-bold shadow-sm flex-shrink-0`}
-                          >
-                            {member.name.charAt(0)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-white text-xs md:text-sm font-medium truncate">
-                              {member.displayName}
-                            </div>
-                            <div className="text-white/70 text-xs flex items-center gap-1">
-                              {member.roleIcon}
-                              {member.role === "child" && member.grade && (
-                                <span className="truncate">{member.grade}</span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="text-xs text-white/60 flex-shrink-0">
-                            {FamilyCalendarController.getFamilyEventsByMember(member.id).length}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {activeTab === "meals" && (
-                <div>
-                  <h3 className="text-white font-medium mb-3 flex items-center gap-2 text-sm md:text-base">
-                    <Utensils className="h-3 w-3 md:h-4 md:w-4" />
-                    Today's Meals
-                  </h3>
-                  {todayMeals.length > 0 ? (
-                    <div className="space-y-2 md:space-y-3">
-                      {todayMeals.map((meal) => (
-                        <div key={meal.id} className="bg-white/10 rounded-lg p-2 md:p-3">
-                          <div className="flex items-center gap-2 mb-1 md:mb-2">
-                            <span className="text-base md:text-lg">{meal.mealTypeIcon}</span>
-                            <span className="text-white font-medium capitalize text-xs md:text-sm">
-                              {meal.mealType}
-                            </span>
-                            <span className="text-xs">{meal.kidFriendlyIcon}</span>
-                          </div>
-                          <div className="text-white text-xs md:text-sm mb-1 line-clamp-2">{meal.meal}</div>
-                          <div className="text-white/70 text-xs">{meal.formattedPrepTime}</div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-white/70 text-xs md:text-sm text-center py-4">
-                      No meals planned for today
-                      <br />
-                      <button className="text-purple-300 hover:text-purple-200 mt-2">Get meal suggestions →</button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeTab === "chores" && (
-                <div>
-                  <h3 className="text-white font-medium mb-3 flex items-center gap-2 text-sm md:text-base">
-                    <CheckSquare className="h-3 w-3 md:h-4 md:w-4" />
-                    Pending Chores
-                  </h3>
-                  {pendingChores.length > 0 ? (
-                    <div className="space-y-2 md:space-y-3">
-                      {pendingChores.map((chore) => (
-                        <div key={chore.id} className="bg-white/10 rounded-lg p-2 md:p-3">
-                          <div className="flex items-center justify-between mb-1 md:mb-2">
-                            <span className="text-white text-xs md:text-sm font-medium line-clamp-1">
-                              {chore.chore}
-                            </span>
-                            <span className="text-xs flex-shrink-0">{chore.statusIcon}</span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-white/70 text-xs truncate">{chore.assignedMemberName}</span>
-                            <span className="text-purple-300 text-xs flex-shrink-0">{chore.pointsDisplay}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-white/70 text-xs md:text-sm text-center py-4">All chores completed! 🎉</div>
-                  )}
-                </div>
-              )}
-
-              {activeTab === "insights" && (
-                <div>
-                  <h3 className="text-white font-medium mb-3 flex items-center gap-2 text-sm md:text-base">
-                    <Lightbulb className="h-3 w-3 md:h-4 md:w-4" />
-                    Family Insights
-                  </h3>
-                  {familyInsights.length > 0 ? (
-                    <div className="space-y-2 md:space-y-3">
-                      {familyInsights.slice(0, 3).map((insight) => (
-                        <div key={insight.id} className="bg-white/10 rounded-lg p-2 md:p-3">
-                          <div className="flex items-center gap-2 mb-1 md:mb-2">
-                            <span className="text-base md:text-lg flex-shrink-0">{insight.typeIcon}</span>
-                            <span className="text-white text-xs md:text-sm font-medium line-clamp-2">
-                              {insight.title}
-                            </span>
-                          </div>
-                          <div className="text-white/80 text-xs mb-1 md:mb-2 line-clamp-3">{insight.message}</div>
-                          {insight.actionable && (
-                            <button className="text-purple-300 hover:text-purple-200 text-xs">
-                              {insight.action} →
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-white/70 text-xs md:text-sm text-center py-4">No insights available</div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </ResizableSidebar>
+        {/* Desktop Collapsible Resizable Sidebar */}
+        <div className="hidden lg:block">
+          <CollapsibleResizableSidebar
+            defaultWidth={320}
+            minWidth={280}
+            maxWidth={500}
+            collapsedWidth={60}
+            className={`h-full bg-white/10 backdrop-blur-lg shadow-xl border-r border-white/20 rounded-tr-3xl opacity-0 ${isLoaded ? "animate-fade-in" : ""}`}
+            style={{ animationDelay: "0.4s" }}
+            onWidthChange={handleSidebarWidthChange}
+            onCollapseChange={handleSidebarCollapseChange}
+          >
+            {sidebarCollapsed ? (
+              <CollapsedSidebarContent activeTab={activeTab} onTabChange={setActiveTab} />
+            ) : (
+              <SidebarContent />
+            )}
+          </CollapsibleResizableSidebar>
+        </div>
 
         {/* Calendar View */}
         <div
@@ -447,7 +486,7 @@ export default function FamilyCalendarHome() {
                       return (
                         <div
                           key={event.id}
-                          className={`absolute left-1 right-1 ${event.color} rounded-lg p-1 md:p-2 text-white text-xs cursor-pointer hover:shadow-lg transition-all z-10`}
+                          className={`absolute left-1 right-1 ${event.color} rounded-lg p-1 md:p-2 text-white text-xs cursor-pointer hover:shadow-lg transition-all z-10 touch-manipulation`}
                           style={style}
                           onClick={() => handleEventClick(event)}
                         >
@@ -474,12 +513,12 @@ export default function FamilyCalendarHome() {
       {/* Event Detail Modal */}
       {selectedEvent && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-md w-full shadow-2xl">
+          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg md:text-xl font-bold text-gray-800 truncate">{selectedEvent.title}</h3>
               <button
                 onClick={() => setSelectedEvent(null)}
-                className="p-2 hover:bg-gray-100 rounded-full flex-shrink-0"
+                className="p-2 hover:bg-gray-100 rounded-full flex-shrink-0 touch-manipulation"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -527,10 +566,10 @@ export default function FamilyCalendarHome() {
             </div>
 
             <div className="flex gap-3 mt-6">
-              <button className="flex-1 bg-purple-500 text-white py-2 px-4 rounded-lg hover:bg-purple-600 transition-colors text-sm md:text-base">
+              <button className="flex-1 bg-purple-500 text-white py-3 px-4 rounded-lg hover:bg-purple-600 transition-colors text-sm md:text-base touch-manipulation">
                 Edit Event
               </button>
-              <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm md:text-base">
+              <button className="px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm md:text-base touch-manipulation">
                 Delete
               </button>
             </div>
