@@ -5,8 +5,10 @@
 export type CalendarEvent = {
   id: number
   title: string
-  startTime: string
-  endTime: string
+  startTime: string // For backward compatibility, but can be either HH:MM or ISO string
+  endTime: string   // For backward compatibility, but can be either HH:MM or ISO string
+  startDateTime?: Date // New timezone-aware datetime field
+  endDateTime?: Date   // New timezone-aware datetime field
   day: number
   description: string
   location: string
@@ -18,6 +20,7 @@ export type CalendarEvent = {
   tags?: string[]
   priority?: "low" | "medium" | "high"
   notifications?: Notification[]
+  timezone?: string // User's timezone when event was created
 }
 
 export type RecurrencePattern = {

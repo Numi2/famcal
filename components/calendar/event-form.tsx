@@ -11,7 +11,10 @@ import {
   Palette,
   Save,
   Plus,
+  Globe,
 } from "lucide-react"
+import { useTimezone } from "@/lib/hooks/use-timezone"
+import { formatTimeInTimezone, getAvailableTimezones } from "@/lib/utils/timezone"
 import type { CalendarEvent } from "@/lib/calendar/types"
 
 interface EventFormProps {
@@ -48,6 +51,7 @@ export default function EventForm({
   selectedDate,
   selectedTime,
 }: EventFormProps) {
+  const { timezone } = useTimezone()
   const [formData, setFormData] = useState({
     title: "",
     startTime: "09:00",
@@ -58,24 +62,36 @@ export default function EventForm({
     attendees: [] as string[],
     organizer: "",
     color: "bg-blue-500",
+    timezone: timezone
   })
 
   const [attendeeInput, setAttendeeInput] = useState("")
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [showTimezoneSelector, setShowTimezoneSelector] = useState(false)
+  const availableTimezones = getAvailableTimezones()
 
   // Initialize form with event data or selected date/time
   useEffect(() => {
     if (event) {
+      // Convert event times to current timezone for editing
+      const eventStartTime = event.startDateTime 
+        ? formatTimeInTimezone(event.startDateTime, timezone)
+        : event.startTime
+      const eventEndTime = event.endDateTime 
+        ? formatTimeInTimezone(event.endDateTime, timezone)
+        : event.endTime
+      
       setFormData({
         title: event.title,
-        startTime: event.startTime,
-        endTime: event.endTime,
+        startTime: eventStartTime,
+        endTime: eventEndTime,
         day: event.day,
         description: event.description,
         location: event.location,
         attendees: event.attendees || [],
         organizer: event.organizer,
         color: event.color,
+        timezone: event.timezone || timezone
       })
     } else if (selectedDate && selectedTime) {
       const dayOfWeek = selectedDate.getDay() + 1 // Convert to 1-7 format
@@ -84,6 +100,7 @@ export default function EventForm({
         day: dayOfWeek,
         startTime: selectedTime,
         endTime: getEndTime(selectedTime),
+        timezone: timezone
       }))
     } else {
       // Reset form
@@ -97,10 +114,11 @@ export default function EventForm({
         attendees: [],
         organizer: "",
         color: "bg-blue-500",
+        timezone: timezone
       })
     }
     setErrors({})
-  }, [event, selectedDate, selectedTime])
+  }, [event, selectedDate, selectedTime, timezone])
 
   const getEndTime = (startTime: string) => {
     const [hour, minute] = startTime.split(":").map(Number)
@@ -146,7 +164,11 @@ export default function EventForm({
       return
     }
 
-    onSubmit(formData)
+    // Pass the timezone information along with the event data
+    onSubmit({
+      ...formData,
+      timezone: formData.timezone
+    })
     onClose()
   }
 
@@ -275,6 +297,51 @@ export default function EventForm({
             </div>
           </div>
           {errors.time && <p className="text-red-500 text-xs">{errors.time}</p>}
+
+          {/* Timezone Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Timezone
+            </label>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 relative">
+                <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={formData.timezone}
+                  readOnly
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
+                  placeholder="Select timezone"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTimezoneSelector(!showTimezoneSelector)}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Change
+              </button>
+            </div>
+            {showTimezoneSelector && (
+              <div className="mt-2 max-h-40 overflow-y-auto border border-gray-300 rounded-lg">
+                {availableTimezones.map((tz) => (
+                  <button
+                    key={tz.value}
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, timezone: tz.value }))
+                      setShowTimezoneSelector(false)
+                    }}
+                    className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${
+                      formData.timezone === tz.value ? 'bg-purple-50 text-purple-700' : 'text-gray-700'
+                    }`}
+                  >
+                    {tz.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Location */}
           <div>
