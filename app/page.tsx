@@ -37,8 +37,8 @@ import type { CalendarEvent } from "@/lib/calendar/types"
 export default function FamilyCalendarHome() {
   const [isLoaded, setIsLoaded] = useState(false)
   const [currentView, setCurrentView] = useState<"week" | "month" | "day">("week")
-  const [currentMonth, setCurrentMonth] = useState("March 2025")
-  const [currentDate, setCurrentDate] = useState("March 5")
+  const [currentDate, setCurrentDate] = useState(new Date())
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<any>(null)
   const [activeTab, setActiveTab] = useState("calendar")
   const [showDashboard, setShowDashboard] = useState(false)
@@ -186,12 +186,68 @@ export default function FamilyCalendarHome() {
     setShowMobileSidebar(!showMobileSidebar)
   }
 
-  // Mini calendar
-  const daysInMonth = 31
-  const firstDayOffset = 5
-  const miniCalendarDays = Array.from({ length: daysInMonth + firstDayOffset }, (_, i) =>
-    i < firstDayOffset ? null : i - firstDayOffset + 1,
-  )
+  // Calendar navigation handlers
+  const handleSidebarPreviousMonth = () => {
+    const newDate = new Date(currentDate)
+    newDate.setMonth(currentDate.getMonth() - 1)
+    setCurrentDate(newDate)
+  }
+
+  const handleSidebarNextMonth = () => {
+    const newDate = new Date(currentDate)
+    newDate.setMonth(currentDate.getMonth() + 1)
+    setCurrentDate(newDate)
+  }
+
+  const handleMainCalendarNavigation = (direction: 'previous' | 'next' | 'today') => {
+    const newDate = new Date(currentDate)
+    
+    if (direction === 'today') {
+      setCurrentDate(new Date())
+      setSelectedDate(new Date())
+    } else if (direction === 'previous') {
+      if (currentView === 'week') {
+        newDate.setDate(currentDate.getDate() - 7)
+      } else if (currentView === 'month') {
+        newDate.setMonth(currentDate.getMonth() - 1)
+      } else {
+        newDate.setDate(currentDate.getDate() - 1)
+      }
+      setCurrentDate(newDate)
+    } else if (direction === 'next') {
+      if (currentView === 'week') {
+        newDate.setDate(currentDate.getDate() + 7)
+      } else if (currentView === 'month') {
+        newDate.setMonth(currentDate.getMonth() + 1)
+      } else {
+        newDate.setDate(currentDate.getDate() + 1)
+      }
+      setCurrentDate(newDate)
+    }
+  }
+
+  // Mini calendar helpers
+  const getMiniCalendarDays = (date: Date) => {
+    const year = date.getFullYear()
+    const month = date.getMonth()
+    const firstDay = new Date(year, month, 1)
+    const lastDay = new Date(year, month + 1, 0)
+    
+    const startDate = new Date(firstDay)
+    startDate.setDate(firstDay.getDate() - firstDay.getDay())
+    
+    const days = []
+    const current = new Date(startDate)
+    
+    while (current <= lastDay || days.length < 42) {
+      days.push(new Date(current))
+      current.setDate(current.getDate() + 1)
+    }
+    
+    return days
+  }
+
+  const miniCalendarDays = getMiniCalendarDays(currentDate)
 
   const children = familyMembers.filter((member) => member.role === "child")
   const parents = familyMembers.filter((member) => member.role === "parent")
@@ -214,7 +270,7 @@ export default function FamilyCalendarHome() {
               setShowAuthModal(true)
             }
           }}
-          className="mb-3 md:mb-4 flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 px-3 md:px-4 py-2 md:py-3 text-white w-full hover:from-pink-600 hover:to-purple-700 transition-all text-sm md:text-base"
+          className="mb-3 md:mb-4 flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 px-3 md:px-4 py-2 md:py-3 text-white w-full hover:from-pink-600 hover:to-purple-700 transition-all text-sm md:text-base touch-manipulation active:scale-95"
         >
           <Plus className="h-4 w-4 md:h-5 md:w-5" />
           <span>Add Event</span>
@@ -231,7 +287,7 @@ export default function FamilyCalendarHome() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-1 px-2 md:px-3 py-1 md:py-2 rounded-full text-xs transition-all ${
+              className={`flex-1 flex items-center justify-center gap-1 px-2 md:px-3 py-1 md:py-2 rounded-full text-xs transition-all touch-manipulation active:scale-95 ${
                 activeTab === tab.id ? "bg-white text-purple-600 shadow-sm" : "text-white hover:bg-white/10"
               }`}
             >
@@ -249,12 +305,20 @@ export default function FamilyCalendarHome() {
             {/* Mini Calendar */}
             <div className="mb-4 md:mb-6">
               <div className="flex items-center justify-between mb-3 md:mb-4">
-                <h3 className="text-white font-medium text-sm md:text-base">{currentMonth}</h3>
+                <h3 className="text-white font-medium text-sm md:text-base">
+                  {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </h3>
                 <div className="flex gap-1">
-                  <button className="p-1 rounded-full hover:bg-white/20">
+                  <button 
+                    onClick={handleSidebarPreviousMonth}
+                    className="p-1 rounded-full hover:bg-white/20 transition-colors touch-manipulation"
+                  >
                     <ChevronLeft className="h-3 w-3 md:h-4 md:w-4 text-white" />
                   </button>
-                  <button className="p-1 rounded-full hover:bg-white/20">
+                  <button 
+                    onClick={handleSidebarNextMonth}
+                    className="p-1 rounded-full hover:bg-white/20 transition-colors touch-manipulation"
+                  >
                     <ChevronRight className="h-3 w-3 md:h-4 md:w-4 text-white" />
                   </button>
                 </div>
@@ -267,16 +331,30 @@ export default function FamilyCalendarHome() {
                   </div>
                 ))}
 
-                {miniCalendarDays.map((day, i) => (
-                  <div
-                    key={i}
-                    className={`text-xs rounded-full w-6 h-6 md:w-7 md:h-7 flex items-center justify-center ${
-                      day === 5 ? "bg-purple-500 text-white" : "text-white hover:bg-white/20"
-                    } ${!day ? "invisible" : ""}`}
-                  >
-                    {day}
-                  </div>
-                ))}
+                {miniCalendarDays.map((day, i) => {
+                  const isCurrentMonth = day.getMonth() === currentDate.getMonth()
+                  const isToday = day.toDateString() === new Date().toDateString()
+                  const isSelected = selectedDate && day.toDateString() === selectedDate.toDateString()
+                  
+                  return (
+                    <div
+                      key={i}
+                      onClick={() => {
+                        setSelectedDate(day)
+                        if (currentView === 'month') {
+                          setCurrentDate(day)
+                        }
+                      }}
+                      className={`text-xs rounded-full w-6 h-6 md:w-7 md:h-7 flex items-center justify-center cursor-pointer transition-all ${
+                        isToday ? "bg-purple-500 text-white" : 
+                        isSelected ? "bg-white/20 text-white" :
+                        isCurrentMonth ? "text-white hover:bg-white/20" : "text-white/50"
+                      }`}
+                    >
+                      {day.getDate()}
+                    </div>
+                  )
+                })}
               </div>
             </div>
 
@@ -420,7 +498,7 @@ export default function FamilyCalendarHome() {
         <div className="flex items-center gap-2 md:gap-4">
           <button
             onClick={isMobile ? toggleMobileSidebar : undefined}
-            className="p-2 rounded-full hover:bg-white/20 transition-colors lg:hidden"
+            className="p-2 rounded-full hover:bg-white/20 transition-colors lg:hidden touch-manipulation active:scale-95"
           >
             <Menu className="h-5 w-5 md:h-6 md:w-6 text-white" />
           </button>
@@ -433,7 +511,7 @@ export default function FamilyCalendarHome() {
         <div className="flex items-center gap-2 md:gap-4">
           <button
             onClick={() => setShowDashboard(!showDashboard)}
-            className="px-2 md:px-4 py-1 md:py-2 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors flex items-center gap-1 md:gap-2 text-sm md:text-base"
+            className="px-2 md:px-4 py-1 md:py-2 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors flex items-center gap-1 md:gap-2 text-sm md:text-base touch-manipulation active:scale-95"
           >
             <div className="h-2 w-2 md:h-3 md:w-3" />
             <span className="hidden sm:inline">Dashboard</span>
@@ -473,7 +551,7 @@ export default function FamilyCalendarHome() {
               <h2 className="text-xl md:text-2xl font-bold text-white">Family Dashboard</h2>
               <button
                 onClick={() => setShowDashboard(false)}
-                className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                className="p-2 hover:bg-white/20 rounded-full transition-colors touch-manipulation active:scale-95"
               >
                 <X className="h-5 w-5 md:h-6 md:w-6 text-white" />
               </button>
@@ -514,10 +592,16 @@ export default function FamilyCalendarHome() {
         >
           <InteractiveCalendar
             currentView={currentView}
+            currentDate={currentDate}
+            selectedDate={selectedDate}
             onViewChange={setCurrentView}
             onEventClick={handleEventClick}
-            onDateSelect={handleDateSelect}
+            onDateSelect={(date) => {
+              setSelectedDate(date)
+              handleDateSelect(date)
+            }}
             onAddEvent={handleAddEvent}
+            onNavigation={handleMainCalendarNavigation}
           />
         </div>
       </main>
@@ -545,7 +629,7 @@ export default function FamilyCalendarHome() {
               <h3 className="text-lg md:text-xl font-bold text-gray-800 truncate">{selectedEvent.title}</h3>
               <button
                 onClick={() => setSelectedEvent(null)}
-                className="p-2 hover:bg-gray-100 rounded-full flex-shrink-0 touch-manipulation"
+                className="p-2 hover:bg-gray-100 rounded-full flex-shrink-0 touch-manipulation active:scale-95"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -614,7 +698,7 @@ export default function FamilyCalendarHome() {
                   handleEditEvent(selectedEvent)
                   setSelectedEvent(null)
                 }}
-                className="flex-1 bg-purple-500 text-white py-3 px-4 rounded-lg hover:bg-purple-600 transition-colors text-sm md:text-base touch-manipulation"
+                className="flex-1 bg-purple-500 text-white py-3 px-4 rounded-lg hover:bg-purple-600 transition-colors text-sm md:text-base touch-manipulation active:scale-95"
               >
                 Edit Event
               </button>
@@ -622,7 +706,7 @@ export default function FamilyCalendarHome() {
                 onClick={() => {
                   handleDeleteEvent(selectedEvent)
                 }}
-                className="px-4 py-3 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm md:text-base touch-manipulation"
+                className="px-4 py-3 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm md:text-base touch-manipulation active:scale-95"
               >
                 Delete
               </button>

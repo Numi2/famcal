@@ -23,6 +23,9 @@ interface InteractiveCalendarProps {
   onAddEvent?: (date: Date, timeSlot?: string) => void
   currentView?: "week" | "month" | "day"
   onViewChange?: (view: "week" | "month" | "day") => void
+  currentDate?: Date
+  selectedDate?: Date | null
+  onNavigation?: (direction: 'previous' | 'next' | 'today') => void
 }
 
 export default function InteractiveCalendar({
@@ -31,9 +34,16 @@ export default function InteractiveCalendar({
   onAddEvent,
   currentView = "week",
   onViewChange,
+  currentDate: externalCurrentDate,
+  selectedDate: externalSelectedDate,
+  onNavigation,
 }: InteractiveCalendarProps) {
-  const [currentDate, setCurrentDate] = useState(new Date())
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [internalCurrentDate, setInternalCurrentDate] = useState(new Date())
+  const [internalSelectedDate, setInternalSelectedDate] = useState<Date | null>(null)
+  
+  // Use external state if provided, otherwise use internal state
+  const currentDate = externalCurrentDate || internalCurrentDate
+  const selectedDate = externalSelectedDate !== undefined ? externalSelectedDate : internalSelectedDate
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [familyEvents, setFamilyEvents] = useState<CalendarEvent[]>([])
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
@@ -95,37 +105,51 @@ export default function InteractiveCalendar({
 
   // Navigation functions
   const goToPreviousPeriod = () => {
-    const newDate = new Date(currentDate)
-    if (currentView === "week") {
-      newDate.setDate(currentDate.getDate() - 7)
-    } else if (currentView === "month") {
-      newDate.setMonth(currentDate.getMonth() - 1)
+    if (onNavigation) {
+      onNavigation('previous')
     } else {
-      newDate.setDate(currentDate.getDate() - 1)
+      const newDate = new Date(currentDate)
+      if (currentView === "week") {
+        newDate.setDate(currentDate.getDate() - 7)
+      } else if (currentView === "month") {
+        newDate.setMonth(currentDate.getMonth() - 1)
+      } else {
+        newDate.setDate(currentDate.getDate() - 1)
+      }
+      setInternalCurrentDate(newDate)
     }
-    setCurrentDate(newDate)
   }
 
   const goToNextPeriod = () => {
-    const newDate = new Date(currentDate)
-    if (currentView === "week") {
-      newDate.setDate(currentDate.getDate() + 7)
-    } else if (currentView === "month") {
-      newDate.setMonth(currentDate.getMonth() + 1)
+    if (onNavigation) {
+      onNavigation('next')
     } else {
-      newDate.setDate(currentDate.getDate() + 1)
+      const newDate = new Date(currentDate)
+      if (currentView === "week") {
+        newDate.setDate(currentDate.getDate() + 7)
+      } else if (currentView === "month") {
+        newDate.setMonth(currentDate.getMonth() + 1)
+      } else {
+        newDate.setDate(currentDate.getDate() + 1)
+      }
+      setInternalCurrentDate(newDate)
     }
-    setCurrentDate(newDate)
   }
 
   const goToToday = () => {
-    setCurrentDate(new Date())
-    setSelectedDate(new Date())
+    if (onNavigation) {
+      onNavigation('today')
+    } else {
+      setInternalCurrentDate(new Date())
+      setInternalSelectedDate(new Date())
+    }
   }
 
   // Date selection handler
   const handleDateClick = (date: Date) => {
-    setSelectedDate(date)
+    if (externalSelectedDate === undefined) {
+      setInternalSelectedDate(date)
+    }
     onDateSelect?.(date)
   }
 
@@ -218,9 +242,9 @@ export default function InteractiveCalendar({
               <button
                 key={view.id}
                 onClick={() => onViewChange?.(view.id as "week" | "month" | "day")}
-                className={`px-3 py-1 rounded-full text-sm transition-all ${
+                className={`px-3 py-1 rounded-full text-sm transition-all touch-manipulation active:scale-95 ${
                   currentView === view.id
-                    ? "bg-white text-purple-600"
+                    ? "bg-white text-purple-600 shadow-sm"
                     : "text-white hover:bg-white/10"
                 }`}
               >
@@ -233,20 +257,20 @@ export default function InteractiveCalendar({
         <div className="flex items-center gap-2">
           <button
             onClick={goToToday}
-            className="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors text-sm"
+            className="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors text-sm touch-manipulation active:scale-95"
           >
             Today
           </button>
           <div className="flex gap-1">
             <button
               onClick={goToPreviousPeriod}
-              className="p-2 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors"
+              className="p-2 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors touch-manipulation active:scale-95"
             >
               <ChevronLeft className="h-4 w-4 text-white" />
             </button>
             <button
               onClick={goToNextPeriod}
-              className="p-2 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors"
+              className="p-2 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors touch-manipulation active:scale-95"
             >
               <ChevronRight className="h-4 w-4 text-white" />
             </button>
@@ -362,7 +386,7 @@ function WeekView({
         <div key={date.toISOString()} className="border-r border-white/20 relative min-w-[100px]">
           {/* Day header */}
           <div 
-            className={`h-16 border-b border-white/20 flex flex-col items-center justify-center cursor-pointer transition-all ${
+            className={`h-16 border-b border-white/20 flex flex-col items-center justify-center cursor-pointer transition-all touch-manipulation active:scale-95 ${
               isToday(date) ? "bg-purple-500/20" : ""
             } ${isSelected(date) ? "bg-white/20" : "hover:bg-white/10"}`}
             onClick={() => onDateClick(date)}
@@ -377,7 +401,7 @@ function WeekView({
           {timeSlots.map((hour) => (
             <div 
               key={hour} 
-              className="h-16 border-b border-white/10 cursor-pointer hover:bg-white/5 transition-colors"
+              className="h-16 border-b border-white/10 cursor-pointer hover:bg-white/5 transition-colors touch-manipulation active:bg-white/10"
               onClick={() => onTimeSlotClick(date, hour)}
             ></div>
           ))}
@@ -390,7 +414,7 @@ function WeekView({
               return (
                 <div
                   key={event.id}
-                  className={`absolute left-1 right-1 ${event.color} rounded-lg p-2 text-white text-xs cursor-pointer hover:shadow-lg transition-all z-10`}
+                  className={`absolute left-1 right-1 ${event.color} rounded-lg p-2 text-white text-xs cursor-pointer hover:shadow-lg transition-all z-10 touch-manipulation active:scale-95`}
                   style={style}
                   onClick={() => onEventClick(event)}
                 >
@@ -450,7 +474,7 @@ function MonthView({
           return (
             <div
               key={index}
-              className={`min-h-[80px] p-2 border border-white/10 rounded-lg cursor-pointer transition-all ${
+              className={`min-h-[80px] p-2 border border-white/10 rounded-lg cursor-pointer transition-all touch-manipulation active:scale-95 ${
                 isCurrentMonth ? "bg-white/5" : "bg-white/5 opacity-50"
               } ${isToday(date) ? "ring-2 ring-purple-500" : ""} ${
                 isSelected(date) ? "bg-white/20" : "hover:bg-white/10"
@@ -468,7 +492,7 @@ function MonthView({
                 {dayEvents.slice(0, 2).map((event) => (
                   <div
                     key={event.id}
-                    className={`text-xs p-1 rounded ${event.color} text-white cursor-pointer hover:opacity-80 transition-opacity`}
+                    className={`text-xs p-1 rounded ${event.color} text-white cursor-pointer hover:opacity-80 transition-opacity touch-manipulation active:scale-95`}
                     onClick={(e) => {
                       e.stopPropagation()
                       onEventClick(event)
@@ -536,7 +560,7 @@ function DayView({
         {timeSlots.map((hour) => (
           <div
             key={hour}
-            className="h-16 border-b border-white/10 flex items-start justify-end pr-4 pt-1 cursor-pointer hover:bg-white/5 transition-colors"
+            className="h-16 border-b border-white/10 flex items-start justify-end pr-4 pt-1 cursor-pointer hover:bg-white/5 transition-colors touch-manipulation active:bg-white/10"
             onClick={() => onTimeSlotClick(displayDate, hour)}
           >
             <span className="text-xs text-white/70">{hour}:00</span>
@@ -549,7 +573,7 @@ function DayView({
           return (
             <div
               key={event.id}
-              className={`absolute left-4 right-4 ${event.color} rounded-lg p-3 text-white cursor-pointer hover:shadow-lg transition-all z-10`}
+              className={`absolute left-4 right-4 ${event.color} rounded-lg p-3 text-white cursor-pointer hover:shadow-lg transition-all z-10 touch-manipulation active:scale-95`}
               style={style}
               onClick={() => onEventClick(event)}
             >
@@ -596,7 +620,7 @@ function EventDetailModal({
           <h3 className="text-xl font-bold text-gray-800 truncate">{event.title}</h3>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full flex-shrink-0"
+            className="p-2 hover:bg-gray-100 rounded-full flex-shrink-0 touch-manipulation active:scale-95"
           >
             <X className="h-5 w-5" />
           </button>
