@@ -9,3 +9,6 @@ export const createClient = () =>
     supabaseUrl!,
     supabaseKey!,
   );
+
+// Default export for compatibility
+export const supabase = createClient();
