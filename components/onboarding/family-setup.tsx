@@ -5,6 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { useAuth } from "@/lib/auth/auth-context"
 import type { OnboardingData } from "@/lib/services/user-onboarding"
+import { ensureAuthenticated } from "@/lib/auth/refresh-session"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -72,6 +73,12 @@ export function FamilySetup({ onComplete }: FamilySetupProps) {
     setError("")
 
     try {
+      // Ensure session is fresh before making API call
+      const isAuthenticated = await ensureAuthenticated()
+      if (!isAuthenticated) {
+        throw new Error("Authentication required. Please sign in again.")
+      }
+
       // Filter out empty members
       const validMembers = familyData.members.filter((member) => member.full_name.trim())
 
@@ -90,6 +97,7 @@ export function FamilySetup({ onComplete }: FamilySetupProps) {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "same-origin", // Include cookies in the request
         body: JSON.stringify({
           familyName: familyData.familyName,
           familyDescription: familyData.familyDescription,

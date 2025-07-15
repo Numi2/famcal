@@ -41,12 +41,33 @@ export async function middleware(request: NextRequest) {
     },
   )
 
-  // Refreshing the session cookie. This will also make it available to Server Components.
-  await supabase.auth.getUser()
+  // Refresh the session and handle authentication
+  const {
+    data: { user },
+    error
+  } = await supabase.auth.getUser()
+
+  // Log authentication state for debugging
+  if (request.nextUrl.pathname.startsWith('/api/')) {
+    console.log('Middleware - API route:', request.nextUrl.pathname)
+    console.log('Middleware - User authenticated:', !!user)
+    if (error) {
+      console.error('Middleware - Auth error:', error.message)
+    }
+  }
 
   return response
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder files
+     */
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 }

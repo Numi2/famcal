@@ -1,38 +1,39 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { getAuthenticatedUser, createServerSupabaseClient } from "@/lib/supabase/server-helpers"
 import { UserOnboardingService } from "@/lib/services/user-onboarding"
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
-    // Get the current user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
+    // Get authenticated user with improved error handling
+    const { user, error: authError } = await getAuthenticatedUser()
 
     if (authError) {
-      console.error("Supabase auth error:", {
-        message: authError.message,
-        status: authError.status,
-        details: authError
-      })
-      return NextResponse.json({ 
-        error: "Authentication failed", 
-        details: authError.message 
-      }, { status: 401 })
+      console.error("Authentication error in family setup:", authError)
+      return NextResponse.json(
+        { 
+          error: "Authentication failed", 
+          details: authError.message,
+          hint: "Please ensure you are logged in and try again"
+        }, 
+        { status: 401 }
+      )
     }
 
     if (!user) {
-      console.error("No user found in session - potential session/cookie issue")
-      return NextResponse.json({ 
-        error: "No authenticated user found", 
-        details: "Session may have expired or cookies are not being set properly" 
-      }, { status: 401 })
+      return NextResponse.json(
+        { 
+          error: "Unauthorized", 
+          details: "No authenticated user found",
+          hint: "Please log in and try again"
+        }, 
+        { status: 401 }
+      )
     }
 
     console.log("User authenticated successfully:", user.id)
+    
+    // Create a fresh Supabase client for the operation
+    const supabase = await createServerSupabaseClient()
 
     const body = await request.json()
     const { familyName, familyDescription, members } = body
