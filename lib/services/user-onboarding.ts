@@ -1,5 +1,7 @@
 import { familyDb } from '@/lib/supabase/family-client'
 import { supabase } from '@/lib/supabase/client'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/supabase/types'
 
 export interface OnboardingData {
   familyName: string
@@ -16,12 +18,20 @@ export interface OnboardingData {
 }
 
 export class UserOnboardingService {
-  static async createFamilyForUser(userId: string, onboardingData: OnboardingData) {
+  static async createFamilyForUser(
+    userId: string, 
+    onboardingData: OnboardingData,
+    supabaseClient?: SupabaseClient<Database>
+  ) {
     try {
+      // Use provided client or default to regular client
+      const client = supabaseClient || supabase
+      
       // Create the family
       const family = await familyDb.createFamily(
         onboardingData.familyName,
-        onboardingData.familyDescription
+        onboardingData.familyDescription,
+        client
       )
 
       // Create family members
@@ -29,13 +39,13 @@ export class UserOnboardingService {
         familyDb.createFamilyMember(family.id, {
           ...member,
           user_id: member.role === 'parent' ? userId : undefined
-        })
+        }, client)
       )
 
       await Promise.all(memberPromises)
 
       // Update the user's profile with the family ID
-      const { error: profileError } = await supabase
+      const { error: profileError } = await client
         .from('profiles')
         .upsert({
           id: userId,
@@ -54,9 +64,11 @@ export class UserOnboardingService {
     }
   }
 
-  static async checkUserOnboardingStatus(userId: string) {
+  static async checkUserOnboardingStatus(userId: string, supabaseClient?: SupabaseClient<Database>) {
     try {
-      const { data: profile, error } = await supabase
+      const client = supabaseClient || supabase
+      
+      const { data: profile, error } = await client
         .from('profiles')
         .select('family_id')
         .eq('id', userId)
@@ -79,7 +91,12 @@ export class UserOnboardingService {
     }
   }
 
-  static async createDefaultFamilyForUser(userId: string, userEmail: string, userName: string) {
+  static async createDefaultFamilyForUser(
+    userId: string, 
+    userEmail: string, 
+    userName: string,
+    supabaseClient?: SupabaseClient<Database>
+  ) {
     const defaultOnboardingData: OnboardingData = {
       familyName: `${userName}'s Family`,
       familyDescription: 'Welcome to your family calendar!',
@@ -92,6 +109,6 @@ export class UserOnboardingService {
       ]
     }
 
-    return this.createFamilyForUser(userId, defaultOnboardingData)
+    return this.createFamilyForUser(userId, defaultOnboardingData, supabaseClient)
   }
 } 

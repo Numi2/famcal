@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js"
 import type { Database } from "./family-types"
+import type { SupabaseClient } from "@supabase/supabase-js"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -9,13 +10,14 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
 // Family-specific database operations
 export const familyDb = {
   // Families
-  async createFamily(name: string, description?: string) {
+  async createFamily(name: string, description?: string, client?: SupabaseClient<Database>) {
+    const supabaseClient = client || supabase
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await supabaseClient.auth.getUser()
     if (!user) throw new Error("Not authenticated")
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from("families")
       .insert({
         name,
@@ -29,8 +31,9 @@ export const familyDb = {
     return data
   },
 
-  async getFamilyByUserId(userId: string) {
-    const { data, error } = await supabase
+  async getFamilyByUserId(userId: string, client?: SupabaseClient<Database>) {
+    const supabaseClient = client || supabase
+    const { data, error } = await supabaseClient
       .from("family_members")
       .select(`
         family_id,
@@ -57,8 +60,10 @@ export const familyDb = {
       color?: string
       user_id?: string
     },
+    client?: SupabaseClient<Database>
   ) {
-    const { data, error } = await supabase
+    const supabaseClient = client || supabase
+    const { data, error } = await supabaseClient
       .from("family_members")
       .insert({
         family_id: familyId,
@@ -71,8 +76,9 @@ export const familyDb = {
     return data
   },
 
-  async getFamilyMembers(familyId: string) {
-    const { data, error } = await supabase
+  async getFamilyMembers(familyId: string, client?: SupabaseClient<Database>) {
+    const supabaseClient = client || supabase
+    const { data, error } = await supabaseClient
       .from("family_members")
       .select("*")
       .eq("family_id", familyId)
@@ -98,32 +104,23 @@ export const familyDb = {
     color?: string
     priority?: "low" | "medium" | "high" | "urgent"
     family_id: string
-  }) {
-    const { data, error } = await supabase.from("family_events").insert(eventData).select().single()
+  }, client?: SupabaseClient<Database>) {
+    const supabaseClient = client || supabase
+    const { data, error } = await supabaseClient.from("family_events").insert(eventData).select().single()
 
     if (error) throw error
     return data
   },
 
-  async getFamilyEvents(familyId: string) {
-    const { data, error } = await supabase
-      .from("family_events")
-      .select("*")
-      .eq("family_id", familyId)
-      .order("day", { ascending: true })
-      .order("start_time", { ascending: true })
+  async getFamilyEvents(familyId: string, day?: number, client?: SupabaseClient<Database>) {
+    const supabaseClient = client || supabase
+    let query = supabaseClient.from("family_events").select("*").eq("family_id", familyId)
 
-    if (error) throw error
-    return data || []
-  },
+    if (day) {
+      query = query.eq("day", day)
+    }
 
-  async getFamilyEventsByDay(familyId: string, day: number) {
-    const { data, error } = await supabase
-      .from("family_events")
-      .select("*")
-      .eq("family_id", familyId)
-      .eq("day", day)
-      .order("start_time", { ascending: true })
+    const { data, error } = await query.order("start_time", { ascending: true })
 
     if (error) throw error
     return data || []
@@ -142,15 +139,17 @@ export const familyDb = {
     difficulty?: "easy" | "medium" | "hard"
     family_id: string
     created_by: string
-  }) {
-    const { data, error } = await supabase.from("meal_plans").insert(mealData).select().single()
+  }, client?: SupabaseClient<Database>) {
+    const supabaseClient = client || supabase
+    const { data, error } = await supabaseClient.from("meal_plans").insert(mealData).select().single()
 
     if (error) throw error
     return data
   },
 
-  async getMealPlans(familyId: string, day?: number) {
-    let query = supabase.from("meal_plans").select("*").eq("family_id", familyId)
+  async getMealPlans(familyId: string, day?: number, client?: SupabaseClient<Database>) {
+    const supabaseClient = client || supabase
+    let query = supabaseClient.from("meal_plans").select("*").eq("family_id", familyId)
 
     if (day) {
       query = query.eq("day", day)
@@ -173,15 +172,17 @@ export const familyDb = {
     parent_approval_required?: boolean
     family_id: string
     created_by: string
-  }) {
-    const { data, error } = await supabase.from("chore_assignments").insert(choreData).select().single()
+  }, client?: SupabaseClient<Database>) {
+    const supabaseClient = client || supabase
+    const { data, error } = await supabaseClient.from("chore_assignments").insert(choreData).select().single()
 
     if (error) throw error
     return data
   },
 
-  async getChoreAssignments(familyId: string, assignedTo?: string) {
-    let query = supabase.from("chore_assignments").select("*").eq("family_id", familyId)
+  async getChoreAssignments(familyId: string, assignedTo?: string, client?: SupabaseClient<Database>) {
+    const supabaseClient = client || supabase
+    let query = supabaseClient.from("chore_assignments").select("*").eq("family_id", familyId)
 
     if (assignedTo) {
       query = query.eq("assigned_to", assignedTo)
@@ -215,8 +216,9 @@ export const familyDb = {
     location?: "indoor" | "outdoor" | "either"
     cost?: "free" | "low" | "medium" | "high"
     duration?: number
-  }) {
-    let query = supabase.from("activity_suggestions").select("*").eq("is_public", true)
+  }, client?: SupabaseClient<Database>) {
+    const supabaseClient = client || supabase
+    let query = supabaseClient.from("activity_suggestions").select("*").eq("is_public", true)
 
     if (filters?.minAge) {
       query = query.lte("min_age", filters.minAge)

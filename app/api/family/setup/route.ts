@@ -9,19 +9,29 @@ export async function POST(request: NextRequest) {
     // Get the current user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
-    if (authError || !user) {
+    if (authError) {
+      console.error('Auth error:', authError)
+      return NextResponse.json({ error: 'Authentication failed' }, { status: 401 })
+    }
+    
+    if (!user) {
+      console.error('No user found in session')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
     const { familyName, familyDescription, members } = body
 
-    // Create the family for the user
-    const family = await UserOnboardingService.createFamilyForUser(user.id, {
-      familyName,
-      familyDescription,
-      members
-    })
+    // Create the family for the user, passing the server client
+    const family = await UserOnboardingService.createFamilyForUser(
+      user.id, 
+      {
+        familyName,
+        familyDescription,
+        members
+      },
+      supabase // Pass the server client
+    )
 
     return NextResponse.json({ 
       success: true, 
