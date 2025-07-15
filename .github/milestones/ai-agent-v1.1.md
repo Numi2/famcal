@@ -26,4 +26,4 @@
 - Agent provides intelligent scheduling suggestions
 - Voice input works reliably
 - Error messages are helpful and actionable
-- Support for multiple languages and locales 
+- Support for multiple languages and locales

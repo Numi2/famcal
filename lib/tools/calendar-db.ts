@@ -401,4 +401,4 @@ export const convertToUserZone = tool({
     const localTime = new Intl.DateTimeFormat('en-CA', options).format(utcDate)
     return localTime.replace(',', 'T') + 'Z'
   }
-}) 
+})

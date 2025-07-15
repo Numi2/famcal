@@ -5,9 +5,9 @@ This system automatically imports GitHub issues and milestones when you push to 
 ## 🚀 Quick Setup
 
 ### Option 1: One-Command Setup (Recommended)
-```bash
+\`\`\`bash
 pnpm run setup-github-import
-```
+\`\`\`
 
 This will:
 - ✅ Install and configure all necessary components
@@ -19,7 +19,7 @@ This will:
 ### Option 2: Manual Setup
 
 1. **Install GitHub CLI**
-   ```bash
+   \`\`\`bash
    # macOS
    brew install gh
    
@@ -28,23 +28,23 @@ This will:
    
    # Windows
    winget install GitHub.cli
-   ```
+   \`\`\`
 
 2. **Authenticate with GitHub**
-   ```bash
+   \`\`\`bash
    gh auth login
-   ```
+   \`\`\`
 
 3. **Make scripts executable**
-   ```bash
+   \`\`\`bash
    chmod +x scripts/import-github-issues.sh
    chmod +x scripts/setup-github-import.sh
    chmod +x .git/hooks/pre-push
-   ```
+   \`\`\`
 
 ## 📁 File Structure
 
-```
+\`\`\`
 .github/
 ├── ISSUE_TEMPLATE/          # Issue templates
 ├── milestones/              # Milestone definitions
@@ -55,23 +55,23 @@ scripts/
 └── setup-github-import.sh   # Setup script
 .git/hooks/
 └── pre-push                # Git hook for auto-import
-```
+\`\`\`
 
 ## 🔄 Import Methods
 
 ### 1. Automatic Import (Git Hook)
 When you push to main/master branch with `.github` files:
-```bash
+\`\`\`bash
 git add .github/
 git commit -m "Add new issues and milestones"
 git push  # Automatically runs import script
-```
+\`\`\`
 
 ### 2. Manual Import
 Run the import script manually:
-```bash
+\`\`\`bash
 pnpm run import-issues
-```
+\`\`\`
 
 ### 3. GitHub Actions (CI/CD)
 Automatically runs when `.github` files are pushed to main/master:
@@ -83,7 +83,7 @@ Automatically runs when `.github` files are pushed to main/master:
 
 ### Milestones
 Create files in `.github/milestones/`:
-```markdown
+\`\`\`markdown
 # Milestone Title
 
 **Due Date:** 2024-01-31  
@@ -96,11 +96,11 @@ Create files in `.github/milestones/`:
 ## Success Criteria
 - Criterion 1
 - Criterion 2
-```
+\`\`\`
 
 ### Issues
 Create files in `.github/issues/`:
-```markdown
+\`\`\`markdown
 # Issue Title
 
 ## Description
@@ -122,11 +122,11 @@ Detailed description of the issue.
 
 ## Implementation Notes
 Implementation details and considerations.
-```
+\`\`\`
 
 ## 🛠️ Available Commands
 
-```bash
+\`\`\`bash
 # Test GitHub CLI setup and permissions
 pnpm run test-github
 
@@ -141,7 +141,7 @@ pnpm run import-issues
 
 # Re-setup git hooks
 pnpm run setup-hooks
-```
+\`\`\`
 
 ## 🔧 Configuration
 
@@ -166,22 +166,22 @@ The workflow automatically runs when:
 ### Common Issues
 
 1. **GitHub CLI not installed**
-   ```bash
+   \`\`\`bash
    # Install GitHub CLI first
    brew install gh  # macOS
    sudo apt install gh  # Ubuntu
-   ```
+   \`\`\`
 
 2. **Not authenticated**
-   ```bash
+   \`\`\`bash
    gh auth login
-   ```
+   \`\`\`
 
 3. **Scripts not executable**
-   ```bash
+   \`\`\`bash
    chmod +x scripts/*.sh
    chmod +x .git/hooks/pre-push
-   ```
+   \`\`\`
 
 4. **Repository permissions**
    - Ensure GitHub Actions has write permissions
@@ -189,9 +189,9 @@ The workflow automatically runs when:
 
 ### Debug Mode
 Run with verbose output:
-```bash
+\`\`\`bash
 bash -x scripts/import-github-issues.sh
-```
+\`\`\`
 
 ## 📊 Monitoring
 
@@ -232,4 +232,4 @@ For issues with the import system:
 1. Check the troubleshooting section
 2. Review GitHub Actions logs
 3. Run in debug mode
-4. Create an issue in the repository 
+4. Create an issue in the repository

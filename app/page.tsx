@@ -23,7 +23,7 @@ import { FamilyCalendarController } from "@/lib/family/controller"
 import { FamilyCalendarPresenter } from "@/lib/family/presenter"
 import { CalendarController } from "@/lib/calendar/controller"
 import { useTimezone } from "@/lib/hooks/use-timezone"
-import { formatTimeInTimezone, formatDateTimeInTimezone } from "@/lib/utils/timezone"
+import { formatTimeInTimezone } from "@/lib/utils/timezone"
 import CollapsibleResizableSidebar from "@/components/ui/collapsible-resizable-sidebar"
 import CollapsedSidebarContent from "@/components/family-dashboard/collapsed-sidebar-content"
 import MobileSidebarOverlay from "@/components/ui/mobile-sidebar-overlay"
@@ -59,6 +59,7 @@ export default function FamilyCalendarHome() {
   const [selectedEventForEdit, setSelectedEventForEdit] = useState<CalendarEvent | null>(null)
   const [selectedDateForEvent, setSelectedDateForEvent] = useState<Date | null>(null)
   const [selectedTimeForEvent, setSelectedTimeForEvent] = useState<string | null>(null)
+  const [showFamilySetupBanner, setShowFamilySetupBanner] = useState(true)
 
   // Family data
   const [familyMembers, setFamilyMembers] = useState<any[]>([])
@@ -70,7 +71,14 @@ export default function FamilyCalendarHome() {
   // Add auth hook
   const { user, loading: authLoading } = useAuth()
   const { familyId, loading: familyLoading } = useFamilyId()
-  const { familyMembers: userFamilyMembers, familyEvents: userFamilyEvents, mealPlans: userMealPlans, choreAssignments: userChoreAssignments, loading: familyDataLoading, error: familyDataError } = useFamilyData()
+  const {
+    familyMembers: userFamilyMembers,
+    familyEvents: userFamilyEvents,
+    mealPlans: userMealPlans,
+    choreAssignments: userChoreAssignments,
+    loading: familyDataLoading,
+    error: familyDataError,
+  } = useFamilyData()
   const [showOnboarding, setShowOnboarding] = useState(false)
 
   useEffect(() => {
@@ -87,14 +95,10 @@ export default function FamilyCalendarHome() {
     return () => window.removeEventListener("resize", checkMobile)
   }, [])
 
-  // Check if authenticated user needs onboarding
+  // Don't force onboarding - let users browse freely
   useEffect(() => {
-    if (user && !familyId && !familyLoading) {
-      setShowOnboarding(true)
-    } else if (!user) {
-      setShowOnboarding(false)
-    }
-  }, [user, familyId, familyLoading])
+    setShowOnboarding(false) // Always start with onboarding closed
+  }, [])
 
   // Load personalized data when available, or sample data for guests
   useEffect(() => {
@@ -140,27 +144,36 @@ export default function FamilyCalendarHome() {
       setTodayMeals(meals)
       setPendingChores(chores)
     }
-  }, [user, familyId, familyLoading, familyDataLoading, userFamilyMembers, userFamilyEvents, userMealPlans, userChoreAssignments])
+  }, [
+    user,
+    familyId,
+    familyLoading,
+    familyDataLoading,
+    userFamilyMembers,
+    userFamilyEvents,
+    userMealPlans,
+    userChoreAssignments,
+  ])
 
   const handleEventClick = (event: any) => {
     // Normalize the event data to handle both calendar events and family events
     const normalizedEvent = {
       ...event,
       // Ensure we have the required properties
-      title: event.title || event.name || 'Untitled Event',
-      startTime: event.startTime || '00:00',
-      endTime: event.endTime || '01:00',
-      description: event.description || '',
-      location: event.location || '',
+      title: event.title || event.name || "Untitled Event",
+      startTime: event.startTime || "00:00",
+      endTime: event.endTime || "01:00",
+      description: event.description || "",
+      location: event.location || "",
       attendees: event.attendees || event.assignedMemberNames || [],
-      organizer: event.organizer || '',
-      color: event.color || 'bg-blue-500',
-      type: event.type || 'event',
-      typeIcon: event.typeIcon || '📅',
+      organizer: event.organizer || "",
+      color: event.color || "bg-blue-500",
+      type: event.type || "event",
+      typeIcon: event.typeIcon || "📅",
       priority: event.priority || null,
-      priorityColor: event.priorityColor || 'bg-gray-100 text-gray-800',
-      formattedTime: event.formattedTime || `${event.startTime || '00:00'} - ${event.endTime || '01:00'}`,
-      assignedMemberNames: event.assignedMemberNames || event.attendees || []
+      priorityColor: event.priorityColor || "bg-gray-100 text-gray-800",
+      formattedTime: event.formattedTime || `${event.startTime || "00:00"} - ${event.endTime || "01:00"}`,
+      assignedMemberNames: event.assignedMemberNames || event.attendees || [],
     }
     setSelectedEvent(normalizedEvent)
   }
@@ -260,25 +273,25 @@ export default function FamilyCalendarHome() {
     setCurrentDate(newDate)
   }
 
-  const handleMainCalendarNavigation = (direction: 'previous' | 'next' | 'today') => {
+  const handleMainCalendarNavigation = (direction: "previous" | "next" | "today") => {
     const newDate = new Date(currentDate)
-    
-    if (direction === 'today') {
+
+    if (direction === "today") {
       setCurrentDate(new Date())
       setSelectedDate(new Date())
-    } else if (direction === 'previous') {
-      if (currentView === 'week') {
+    } else if (direction === "previous") {
+      if (currentView === "week") {
         newDate.setDate(currentDate.getDate() - 7)
-      } else if (currentView === 'month') {
+      } else if (currentView === "month") {
         newDate.setMonth(currentDate.getMonth() - 1)
       } else {
         newDate.setDate(currentDate.getDate() - 1)
       }
       setCurrentDate(newDate)
-    } else if (direction === 'next') {
-      if (currentView === 'week') {
+    } else if (direction === "next") {
+      if (currentView === "week") {
         newDate.setDate(currentDate.getDate() + 7)
-      } else if (currentView === 'month') {
+      } else if (currentView === "month") {
         newDate.setMonth(currentDate.getMonth() + 1)
       } else {
         newDate.setDate(currentDate.getDate() + 1)
@@ -293,18 +306,18 @@ export default function FamilyCalendarHome() {
     const month = date.getMonth()
     const firstDay = new Date(year, month, 1)
     const lastDay = new Date(year, month + 1, 0)
-    
+
     const startDate = new Date(firstDay)
     startDate.setDate(firstDay.getDate() - firstDay.getDay())
-    
+
     const days = []
     const current = new Date(startDate)
-    
+
     while (current <= lastDay || days.length < 42) {
       days.push(new Date(current))
       current.setDate(current.getDate() + 1)
     }
-    
+
     return days
   }
 
@@ -321,18 +334,51 @@ export default function FamilyCalendarHome() {
         <button
           onClick={() => {
             if (user) {
-              setSelectedEventForEdit(null)
-              setSelectedDateForEvent(null)
-              setSelectedTimeForEvent(null)
-              setShowEventForm(true)
+              switch (activeTab) {
+                case "calendar":
+                  setSelectedEventForEdit(null)
+                  setSelectedDateForEvent(null)
+                  setSelectedTimeForEvent(null)
+                  setShowEventForm(true)
+                  break
+                case "meals":
+                  // TODO: Open meal planning form
+                  console.log("Add meal functionality")
+                  break
+                case "chores":
+                  // TODO: Open chore assignment form
+                  console.log("Add chore functionality")
+                  break
+                case "insights":
+                  // TODO: Open insight creation form
+                  console.log("Add insight functionality")
+                  break
+                default:
+                  setSelectedEventForEdit(null)
+                  setSelectedDateForEvent(null)
+                  setSelectedTimeForEvent(null)
+                  setShowEventForm(true)
+              }
             } else {
               setShowAuthModal(true)
             }
           }}
-          className="mb-3 md:mb-4 flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 px-3 md:px-4 py-2 md:py-3 text-white w-full hover:from-pink-600 hover:to-purple-700 transition-all text-sm md:text-base touch-manipulation active:scale-95"
+          className="mb-3 md:mb-4 flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-lg border border-white/20 px-3 md:px-4 py-2 md:py-3 text-white w-full hover:bg-white/20 transition-all text-sm md:text-base touch-manipulation active:scale-95 shadow-lg"
         >
           <Plus className="h-4 w-4 md:h-5 md:w-5" />
-          <span>{user ? "Add Event" : "Sign In to Add Event"}</span>
+          <span>
+            {user
+              ? activeTab === "calendar"
+                ? "+ Add Event"
+                : activeTab === "meals"
+                  ? "+ Add Meal"
+                  : activeTab === "chores"
+                    ? "+ Add Chore"
+                    : activeTab === "insights"
+                      ? "+ Add Insight"
+                      : "+ Add"
+              : "Sign In to Add"}
+          </span>
         </button>
 
         {/* Tab Navigation */}
@@ -365,16 +411,16 @@ export default function FamilyCalendarHome() {
             <div className="mb-4 md:mb-6">
               <div className="flex items-center justify-between mb-3 md:mb-4">
                 <h3 className="text-white font-medium text-sm md:text-base">
-                  {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                  {currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
                 </h3>
                 <div className="flex gap-1">
-                  <button 
+                  <button
                     onClick={handleSidebarPreviousMonth}
                     className="p-1 rounded-full hover:bg-white/20 transition-colors touch-manipulation"
                   >
                     <ChevronLeft className="h-3 w-3 md:h-4 md:w-4 text-white" />
                   </button>
-                  <button 
+                  <button
                     onClick={handleSidebarNextMonth}
                     className="p-1 rounded-full hover:bg-white/20 transition-colors touch-manipulation"
                   >
@@ -394,20 +440,24 @@ export default function FamilyCalendarHome() {
                   const isCurrentMonth = day.getMonth() === currentDate.getMonth()
                   const isToday = day.toDateString() === new Date().toDateString()
                   const isSelected = selectedDate && day.toDateString() === selectedDate.toDateString()
-                  
+
                   return (
                     <div
                       key={i}
                       onClick={() => {
                         setSelectedDate(day)
-                        if (currentView === 'month') {
+                        if (currentView === "month") {
                           setCurrentDate(day)
                         }
                       }}
                       className={`text-xs rounded-full w-6 h-6 md:w-7 md:h-7 flex items-center justify-center cursor-pointer transition-all ${
-                        isToday ? "bg-purple-500 text-white" : 
-                        isSelected ? "bg-white/20 text-white" :
-                        isCurrentMonth ? "text-white hover:bg-white/20" : "text-white/50"
+                        isToday
+                          ? "bg-purple-500 text-white"
+                          : isSelected
+                            ? "bg-white/20 text-white"
+                            : isCurrentMonth
+                              ? "text-white hover:bg-white/20"
+                              : "text-white/50"
                       }`}
                     >
                       {day.getDate()}
@@ -543,19 +593,6 @@ export default function FamilyCalendarHome() {
     return <LoadingState />
   }
 
-  // Show onboarding if authenticated user needs to set up their family
-  if (user && showOnboarding) {
-    return (
-      <FamilySetup 
-        onComplete={() => {
-          setShowOnboarding(false)
-          // Refresh the page to load the new family data
-          window.location.reload()
-        }} 
-      />
-    )
-  }
-
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
       {/* Background Image */}
@@ -571,15 +608,38 @@ export default function FamilyCalendarHome() {
       {!user && (
         <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-10 bg-white/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-md">
           <p className="text-sm text-gray-700 text-center">
-            <span className="font-medium">Browsing as Guest</span> - 
-            <button 
+            <span className="font-medium">Browsing as Guest</span> -
+            <button
               onClick={() => setShowAuthModal(true)}
               className="text-purple-600 hover:text-purple-800 ml-1 underline"
             >
               Sign in
-            </button>
-            {" "}for full features
+            </button>{" "}
+            for full features
           </p>
+        </div>
+      )}
+
+      {/* Optional Family Setup Banner */}
+      {user && !familyId && !familyLoading && showFamilySetupBanner && (
+        <div className="absolute top-24 left-1/2 transform -translate-x-1/2 z-10 bg-white/10 backdrop-blur-lg rounded-lg px-4 py-3 shadow-md max-w-md border border-white/20">
+          <p className="text-sm text-white text-center mb-2">
+            <span className="font-medium">Set up your family calendar</span> for personalized features
+          </p>
+          <div className="flex gap-2 justify-center">
+            <button
+              onClick={() => setShowOnboarding(true)}
+              className="rounded-lg border border-white/20 bg-white/10 backdrop-blur-lg shadow-lg"
+            >
+              Set Up Family
+            </button>
+            <button
+              onClick={() => setShowFamilySetupBanner(false)}
+              className="text-white/80 hover:text-white px-3 py-1 text-xs transition-colors"
+            >
+              Maybe Later
+            </button>
+          </div>
         </div>
       )}
 
@@ -757,9 +817,7 @@ export default function FamilyCalendarHome() {
                     : selectedEvent.formattedTime || `${selectedEvent.startTime} - ${selectedEvent.endTime}`}
                 </span>
                 {selectedEvent.timezone && selectedEvent.timezone !== timezone && (
-                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                    {selectedEvent.timezone}
-                  </span>
+                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{selectedEvent.timezone}</span>
                 )}
               </div>
 
@@ -800,9 +858,7 @@ export default function FamilyCalendarHome() {
               <div className="flex items-center gap-2 mt-4">
                 {selectedEvent.typeIcon && <span className="text-2xl">{selectedEvent.typeIcon}</span>}
                 {selectedEvent.type && (
-                  <span className="text-sm text-gray-500 capitalize">
-                    {selectedEvent.type.replace("-", " ")}
-                  </span>
+                  <span className="text-sm text-gray-500 capitalize">{selectedEvent.type.replace("-", " ")}</span>
                 )}
                 {selectedEvent.priority && selectedEvent.priorityColor && (
                   <span className={`px-2 py-1 rounded-full text-xs ${selectedEvent.priorityColor}`}>
@@ -813,7 +869,7 @@ export default function FamilyCalendarHome() {
             </div>
 
             <div className="flex gap-3 mt-6">
-              <button 
+              <button
                 onClick={() => {
                   handleEditEvent(selectedEvent)
                   setSelectedEvent(null)
@@ -822,7 +878,7 @@ export default function FamilyCalendarHome() {
               >
                 {user ? "Edit Event" : "Sign In to Edit"}
               </button>
-              <button 
+              <button
                 onClick={() => {
                   handleDeleteEvent(selectedEvent)
                 }}
@@ -836,11 +892,29 @@ export default function FamilyCalendarHome() {
       )}
       {/* Auth Modal */}
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} initialMode="signin" />
-      
-      {/* AI Assistant */}
-      {user && familyId && !familyLoading && (
-        <FamilyCalendarAssistant familyId={familyId} />
+
+      {/* Family Setup Modal */}
+      {showOnboarding && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="relative max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setShowOnboarding(false)}
+              className="absolute top-4 right-4 z-10 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <FamilySetup
+              onComplete={() => {
+                setShowOnboarding(false)
+                // Refresh the page to load the new family data
+                window.location.reload()
+              }}
+            />
+          </div>
+        </div>
       )}
+      {/* AI Assistant */}
+      {user && familyId && !familyLoading && <FamilyCalendarAssistant familyId={familyId} />}
     </div>
   )
 }

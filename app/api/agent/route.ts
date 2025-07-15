@@ -50,4 +50,4 @@ Be conversational and helpful. If a user asks to schedule something, help them f
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     )
   }
-} 
+}

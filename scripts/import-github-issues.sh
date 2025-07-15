@@ -107,4 +107,4 @@ for file in .github/issues/*.md; do
     fi
 done
 
-echo -e "${GREEN}Import completed!${NC}" 
+echo -e "${GREEN}Import completed!${NC}"

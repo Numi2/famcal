@@ -18,7 +18,7 @@ This document provides a complete guide for implementing the database infrastruc
 ## Database Architecture
 
 ### Entity Relationship Diagram
-```
+\`\`\`
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │    families     │     │    profiles     │     │ family_members  │
 ├─────────────────┤     ├─────────────────┤     ├─────────────────┤
@@ -45,14 +45,14 @@ This document provides a complete guide for implementing the database infrastruc
 │ recurring       │     │ tokens_used     │
 │ created_by (FK) │     │ created_at      │
 └─────────────────┘     └─────────────────┘
-```
+\`\`\`
 
 ## Core Tables
 
 ### 1. Families Table
 Stores family group information.
 
-```sql
+\`\`\`sql
 CREATE TABLE families (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) NOT NULL,
@@ -75,12 +75,12 @@ CREATE TABLE families (
 -- Indexes
 CREATE INDEX idx_families_created_at ON families(created_at DESC);
 CREATE INDEX idx_families_subscription ON families(subscription_tier);
-```
+\`\`\`
 
 ### 2. Profiles Table
 Stores user account information.
 
-```sql
+\`\`\`sql
 CREATE TABLE profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email VARCHAR(255) UNIQUE NOT NULL,
@@ -104,12 +104,12 @@ CREATE TABLE profiles (
 CREATE INDEX idx_profiles_family_id ON profiles(family_id);
 CREATE INDEX idx_profiles_email ON profiles(email);
 CREATE INDEX idx_profiles_last_seen ON profiles(last_seen_at DESC);
-```
+\`\`\`
 
 ### 3. Family Members Table
 Stores information about all family members (including non-users like children).
 
-```sql
+\`\`\`sql
 CREATE TABLE family_members (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   family_id UUID NOT NULL REFERENCES families(id) ON DELETE CASCADE,
@@ -148,12 +148,12 @@ CREATE TABLE family_members (
 CREATE INDEX idx_family_members_family_id ON family_members(family_id);
 CREATE INDEX idx_family_members_user_id ON family_members(user_id);
 CREATE INDEX idx_family_members_active ON family_members(family_id, is_active);
-```
+\`\`\`
 
 ### 4. Calendar Events Table
 Stores all calendar events with AI-enhanced features.
 
-```sql
+\`\`\`sql
 CREATE TABLE calendar_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   family_id UUID NOT NULL REFERENCES families(id) ON DELETE CASCADE,
@@ -219,14 +219,14 @@ CREATE INDEX idx_events_deleted ON calendar_events(deleted_at) WHERE deleted_at 
 CREATE INDEX idx_events_search ON calendar_events USING GIN(
   to_tsvector('english', title || ' ' || COALESCE(description, '') || ' ' || COALESCE(location, ''))
 );
-```
+\`\`\`
 
 ## AI-Specific Tables
 
 ### 5. AI Interactions Table
 Tracks all AI agent interactions for learning and analytics.
 
-```sql
+\`\`\`sql
 CREATE TABLE ai_interactions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -272,12 +272,12 @@ CREATE TABLE ai_interactions (
   INDEX idx_ai_success ON ai_interactions(success, created_at DESC),
   INDEX idx_ai_feedback ON ai_interactions(feedback_rating) WHERE feedback_rating IS NOT NULL
 );
-```
+\`\`\`
 
 ### 6. AI Preferences Table
 Stores user-specific AI preferences and settings.
 
-```sql
+\`\`\`sql
 CREATE TABLE ai_preferences (
   user_id UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
   
@@ -316,12 +316,12 @@ CREATE TABLE ai_preferences (
 
 -- Index for quick lookups
 CREATE INDEX idx_ai_prefs_updated ON ai_preferences(updated_at DESC);
-```
+\`\`\`
 
 ### 7. AI Learning Table
 Stores patterns and insights learned by the AI.
 
-```sql
+\`\`\`sql
 CREATE TABLE ai_learning_patterns (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   family_id UUID NOT NULL REFERENCES families(id) ON DELETE CASCADE,
@@ -340,12 +340,12 @@ CREATE TABLE ai_learning_patterns (
   INDEX idx_learning_family ON ai_learning_patterns(family_id, pattern_type),
   INDEX idx_learning_active ON ai_learning_patterns(is_active, confidence DESC)
 );
-```
+\`\`\`
 
 ### 8. AI Task Queue Table
 Manages background AI tasks and scheduled actions.
 
-```sql
+\`\`\`sql
 CREATE TABLE ai_task_queue (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   family_id UUID NOT NULL REFERENCES families(id) ON DELETE CASCADE,
@@ -372,12 +372,12 @@ CREATE TABLE ai_task_queue (
     WHERE status IN ('pending', 'processing'),
   INDEX idx_task_queue_family ON ai_task_queue(family_id, task_type)
 );
-```
+\`\`\`
 
 ## Relationships & Constraints
 
 ### Foreign Key Relationships
-```sql
+\`\`\`sql
 -- Ensure referential integrity
 ALTER TABLE profiles 
   ADD CONSTRAINT fk_profiles_family 
@@ -419,12 +419,12 @@ CREATE TRIGGER check_event_participants
   BEFORE INSERT OR UPDATE ON calendar_events
   FOR EACH ROW
   EXECUTE FUNCTION validate_event_participants();
-```
+\`\`\`
 
 ## Indexes & Performance
 
 ### Composite Indexes for Common Queries
-```sql
+\`\`\`sql
 -- Family dashboard queries
 CREATE INDEX idx_events_family_upcoming ON calendar_events(family_id, start_time)
   WHERE status != 'cancelled' AND deleted_at IS NULL;
@@ -440,10 +440,10 @@ CREATE INDEX idx_events_ai_patterns ON calendar_events(family_id, category, star
 -- Conflict detection
 CREATE INDEX idx_events_conflict_check ON calendar_events(family_id, start_time, end_time)
   WHERE status != 'cancelled' AND deleted_at IS NULL;
-```
+\`\`\`
 
 ### Materialized Views for Analytics
-```sql
+\`\`\`sql
 -- Family activity summary
 CREATE MATERIALIZED VIEW family_activity_summary AS
 SELECT 
@@ -464,12 +464,12 @@ GROUP BY f.id, f.name;
 
 -- Refresh periodically
 CREATE INDEX idx_family_activity_summary ON family_activity_summary(family_id);
-```
+\`\`\`
 
 ## Row Level Security
 
 ### Enable RLS on all tables
-```sql
+\`\`\`sql
 -- Enable RLS
 ALTER TABLE families ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
@@ -544,12 +544,12 @@ CREATE POLICY "Users can create their own AI interactions"
 CREATE POLICY "Users can manage their own AI preferences"
   ON ai_preferences FOR ALL
   USING (user_id = auth.uid());
-```
+\`\`\`
 
 ## Migration Scripts
 
 ### Initial Setup Migration
-```sql
+\`\`\`sql
 -- Migration: 001_initial_schema.sql
 BEGIN;
 
@@ -567,10 +567,10 @@ INSERT INTO families (id, name) VALUES
   ('00000000-0000-0000-0000-000000000001', 'Demo Family');
 
 COMMIT;
-```
+\`\`\`
 
 ### Add AI Features Migration
-```sql
+\`\`\`sql
 -- Migration: 002_add_ai_features.sql
 BEGIN;
 
@@ -588,12 +588,12 @@ ALTER TABLE calendar_events
 -- [Include AI-specific indexes]
 
 COMMIT;
-```
+\`\`\`
 
 ## Data Seeding
 
 ### Test Data for Development
-```sql
+\`\`\`sql
 -- Seed test family
 INSERT INTO families (id, name, settings) VALUES (
   '11111111-1111-1111-1111-111111111111',
@@ -645,12 +645,12 @@ INSERT INTO calendar_events (
 INSERT INTO ai_preferences (user_id, language, proactive_suggestions) VALUES
   ('22222222-2222-2222-2222-222222222222', 'en', true),
   ('33333333-3333-3333-3333-333333333333', 'en', true);
-```
+\`\`\`
 
 ## Integration with AI Agent
 
 ### Database Access Layer
-```typescript
+\`\`\`typescript
 // lib/ai/db/calendar-repository.ts
 import { createClient } from '@/lib/supabase/server';
 
@@ -737,10 +737,10 @@ export class CalendarRepository {
     }
   }
 }
-```
+\`\`\`
 
 ### Real-time Subscriptions
-```typescript
+\`\`\`typescript
 // lib/ai/realtime/calendar-subscriptions.ts
 export function subscribeToFamilyEvents(
   familyId: string,
@@ -766,12 +766,12 @@ export function subscribeToFamilyEvents(
 
   return subscription;
 }
-```
+\`\`\`
 
 ## Maintenance & Optimization
 
 ### Regular Maintenance Tasks
-```sql
+\`\`\`sql
 -- 1. Vacuum and analyze tables (run weekly)
 VACUUM ANALYZE calendar_events;
 VACUUM ANALYZE ai_interactions;
@@ -795,10 +795,10 @@ WHERE deleted_at < CURRENT_DATE - INTERVAL '30 days';
 
 -- 5. Update statistics
 ANALYZE;
-```
+\`\`\`
 
 ### Performance Monitoring Queries
-```sql
+\`\`\`sql
 -- Check table sizes
 SELECT 
   schemaname,
@@ -830,10 +830,10 @@ SELECT
   idx_tup_fetch
 FROM pg_stat_user_indexes
 ORDER BY idx_scan;
-```
+\`\`\`
 
 ### Backup Strategy
-```bash
+\`\`\`bash
 # Daily backup script
 #!/bin/bash
 DATE=$(date +%Y%m%d_%H%M%S)
@@ -857,7 +857,7 @@ gzip backup_ai_$DATE.sql
 # Upload to cloud storage
 aws s3 cp backup_full_$DATE.sql.gz s3://your-backup-bucket/
 aws s3 cp backup_ai_$DATE.sql.gz s3://your-backup-bucket/
-```
+\`\`\`
 
 ## Security Best Practices
 

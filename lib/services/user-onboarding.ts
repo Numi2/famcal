@@ -111,4 +111,4 @@ export class UserOnboardingService {
 
     return this.createFamilyForUser(userId, defaultOnboardingData, supabaseClient)
   }
-} 
+}

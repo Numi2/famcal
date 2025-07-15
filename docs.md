@@ -53,7 +53,7 @@ This project demonstrates:
 
 The application follows a modified MVC pattern adapted for React:
 
-```
+\`\`\`
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │     Model       │    │   Controller    │    │    Presenter    │
 │                 │    │                 │    │                 │
@@ -61,13 +61,13 @@ The application follows a modified MVC pattern adapted for React:
 │ • Data access   │    │ • Validation    │    │ • Display logic │
 │ • Data models   │    │ • Orchestration │    │ • User feedback │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
-```
+\`\`\`
 
 **Learning Point**: This pattern separates concerns and makes the code more maintainable and testable.
 
 ### 2. Layered Architecture
 
-```
+\`\`\`
 ┌─────────────────────────────────────────────────────────────┐
 │                    Presentation Layer                       │
 │  (React Components, UI State, User Interactions)          │
@@ -78,7 +78,7 @@ The application follows a modified MVC pattern adapted for React:
 │                      Data Layer                           │
 │  (Models, Data Access, External APIs)                    │
 └─────────────────────────────────────────────────────────────┘
-```
+\`\`\`
 
 **Learning Point**: Each layer has a specific responsibility, making the system easier to understand and modify.
 
@@ -120,7 +120,7 @@ The application follows a modified MVC pattern adapted for React:
 
 The application models real-world family relationships:
 
-```typescript
+\`\`\`typescript
 type FamilyMember = {
   id: string
   name: string
@@ -133,7 +133,7 @@ type FamilyMember = {
     dietaryRestrictions?: string[]
   }
 }
-```
+\`\`\`
 
 **Learning Point**: Data models should reflect real-world entities and relationships.
 
@@ -141,7 +141,7 @@ type FamilyMember = {
 
 Events are the core of the application:
 
-```typescript
+\`\`\`typescript
 type FamilyEvent = {
   id: number
   title: string
@@ -153,7 +153,7 @@ type FamilyEvent = {
   requiresTransport?: boolean
   carpoolInfo?: CarpoolInfo
 }
-```
+\`\`\`
 
 **Learning Point**: Complex data structures can model real-world scenarios with multiple relationships.
 
@@ -161,7 +161,7 @@ type FamilyEvent = {
 
 The application uses comprehensive type definitions:
 
-```typescript
+\`\`\`typescript
 export type EventType =
   | "school"
   | "medical"
@@ -171,7 +171,7 @@ export type EventType =
   | "family-time"
   | "bedtime"
   // ... more types
-```
+\`\`\`
 
 **Learning Point**: Strong typing prevents runtime errors and improves code quality.
 
@@ -181,7 +181,7 @@ export type EventType =
 
 ### Directory Structure
 
-```
+\`\`\`
 family-calendar/
 ├── app/                    # Next.js App Router
 │   ├── api/               # API routes
@@ -199,7 +199,7 @@ family-calendar/
 │   └── supabase/         # Database client
 ├── public/               # Static assets
 └── styles/               # Additional styles
-```
+\`\`\`
 
 ### Key Files and Their Purposes
 
@@ -218,7 +218,7 @@ family-calendar/
 
 ### 1. Family Calendar Controller
 
-```typescript
+\`\`\`typescript
 export const FamilyCalendarController = {
   // Family Members Management
   getFamilyMembers() {
@@ -241,13 +241,13 @@ export const FamilyCalendarController = {
     // Business logic for meal suggestions
   }
 }
-```
+\`\`\`
 
 **Learning Point**: Controllers handle business logic, validation, and orchestration.
 
 ### 2. Family Calendar Presenter
 
-```typescript
+\`\`\`typescript
 export const FamilyCalendarPresenter = {
   formatFamilyEvents(events: FamilyEvent[]) {
     return events.map((event) => ({
@@ -259,13 +259,13 @@ export const FamilyCalendarPresenter = {
     }))
   }
 }
-```
+\`\`\`
 
 **Learning Point**: Presenters format data for display and handle UI-specific logic.
 
 ### 3. Authentication Context
 
-```typescript
+\`\`\`typescript
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
@@ -280,7 +280,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
-```
+\`\`\`
 
 **Learning Point**: React Context provides global state management for authentication.
 
@@ -290,15 +290,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 ### 1. Component Data Flow
 
-```
+\`\`\`
 User Interaction → Component → Controller → Model → Database
                 ↓
 User Interface ← Presenter ← Controller ← Model ← Database
-```
+\`\`\`
 
 ### 2. State Management Flow
 
-```typescript
+\`\`\`typescript
 // 1. User interacts with component
 const handleEventClick = (event) => {
   setSelectedEvent(event)
@@ -313,11 +313,11 @@ return (
     {selectedEvent && <EventDetails event={selectedEvent} />}
   </div>
 )
-```
+\`\`\`
 
 ### 3. API Data Flow
 
-```typescript
+\`\`\`typescript
 // 1. Component calls API
 const response = await fetch('/api/chat', {
   method: 'POST',
@@ -334,7 +334,7 @@ export async function POST(req: Request) {
   // 4. API returns formatted response
   return NextResponse.json({ events })
 }
-```
+\`\`\`
 
 ---
 
@@ -342,7 +342,7 @@ export async function POST(req: Request) {
 
 ### 1. Factory Pattern
 
-```typescript
+\`\`\`typescript
 // Event type icons factory
 getEventTypeIcon(type: string): string {
   const icons = {
@@ -354,13 +354,13 @@ getEventTypeIcon(type: string): string {
   }
   return icons[type] || "📅"
 }
-```
+\`\`\`
 
 **Learning Point**: Factory patterns create objects based on input parameters.
 
 ### 2. Observer Pattern (React Hooks)
 
-```typescript
+\`\`\`typescript
 // Component observes state changes
 useEffect(() => {
   const checkMobile = () => {
@@ -372,20 +372,20 @@ useEffect(() => {
   
   return () => window.removeEventListener("resize", checkMobile)
 }, [])
-```
+\`\`\`
 
 **Learning Point**: React hooks provide reactive programming patterns.
 
 ### 3. Strategy Pattern
 
-```typescript
+\`\`\`typescript
 // Different formatting strategies
 const formattingStrategies = {
   familyEvents: (events) => events.map(formatEvent),
   mealPlans: (meals) => meals.map(formatMeal),
   choreAssignments: (chores) => chores.map(formatChore)
 }
-```
+\`\`\`
 
 **Learning Point**: Strategy patterns allow different algorithms to be used interchangeably.
 
@@ -395,29 +395,29 @@ const formattingStrategies = {
 
 ### 1. Local Component State
 
-```typescript
+\`\`\`typescript
 const [currentView, setCurrentView] = useState("week")
 const [selectedEvent, setSelectedEvent] = useState(null)
 const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-```
+\`\`\`
 
 **Learning Point**: Use local state for component-specific data.
 
 ### 2. Global State with Context
 
-```typescript
+\`\`\`typescript
 // Authentication state
 const { user, loading: authLoading } = useAuth()
 
 // Theme state
 const { theme, setTheme } = useTheme()
-```
+\`\`\`
 
 **Learning Point**: Use context for state that needs to be shared across components.
 
 ### 3. Server State Management
 
-```typescript
+\`\`\`typescript
 // Data fetching with useEffect
 useEffect(() => {
   const members = FamilyCalendarPresenter.formatFamilyMembers(
@@ -425,7 +425,7 @@ useEffect(() => {
   )
   setFamilyMembers(members)
 }, [])
-```
+\`\`\`
 
 **Learning Point**: Separate server state from client state for better performance.
 
@@ -435,7 +435,7 @@ useEffect(() => {
 
 ### 1. Supabase Authentication
 
-```typescript
+\`\`\`typescript
 // Authentication context
 const signIn = async (email: string, password: string) => {
   const { error } = await supabase.auth.signInWithPassword({
@@ -444,13 +444,13 @@ const signIn = async (email: string, password: string) => {
   })
   return { error }
 }
-```
+\`\`\`
 
 **Learning Point**: Use established authentication services for security.
 
 ### 2. Protected Routes
 
-```typescript
+\`\`\`typescript
 // Conditional rendering based on auth state
 {user ? (
   <AddEventForm />
@@ -459,13 +459,13 @@ const signIn = async (email: string, password: string) => {
     Sign in to add events
   </button>
 )}
-```
+\`\`\`
 
 **Learning Point**: Always check authentication before allowing sensitive operations.
 
 ### 3. Session Management
 
-```typescript
+\`\`\`typescript
 useEffect(() => {
   // Get initial session
   supabase.auth.getSession().then(({ data: { session } }) => {
@@ -483,7 +483,7 @@ useEffect(() => {
 
   return () => subscription.unsubscribe()
 }, [])
-```
+\`\`\`
 
 **Learning Point**: Proper session management ensures consistent user experience.
 
@@ -493,7 +493,7 @@ useEffect(() => {
 
 ### 1. AI System Prompt Design
 
-```typescript
+\`\`\`typescript
 const familyCalendarSystemPrompt = `
 You are an AI assistant for a Family Calendar application.
 Your purpose is to help families with small children manage their daily lives.
@@ -507,13 +507,13 @@ CAPABILITIES:
 - Help with meal planning
 - Coordinate chores and teach responsibility
 `
-```
+\`\`\`
 
 **Learning Point**: Well-designed prompts are crucial for AI functionality.
 
 ### 2. Tool Calling Pattern
 
-```typescript
+\`\`\`typescript
 const familyCalendarTools = [
   {
     name: "getFamilyMembers",
@@ -530,13 +530,13 @@ const familyCalendarTools = [
     },
   }
 ]
-```
+\`\`\`
 
 **Learning Point**: Tool calling allows AI to interact with application data.
 
 ### 3. Streaming Responses
 
-```typescript
+\`\`\`typescript
 export async function POST(req: Request) {
   const { messages } = await req.json()
   
@@ -549,7 +549,7 @@ export async function POST(req: Request) {
   
   return result.toDataStreamResponse()
 }
-```
+\`\`\`
 
 **Learning Point**: Streaming provides better user experience for AI interactions.
 
@@ -559,7 +559,7 @@ export async function POST(req: Request) {
 
 ### 1. Responsive Design
 
-```typescript
+\`\`\`typescript
 // Mobile detection
 const [isMobile, setIsMobile] = useState(false)
 
@@ -571,13 +571,13 @@ useEffect(() => {
   checkMobile()
   window.addEventListener("resize", checkMobile)
 }, [])
-```
+\`\`\`
 
 **Learning Point**: Responsive design ensures accessibility across devices.
 
 ### 2. Component Composition
 
-```typescript
+\`\`\`typescript
 // Reusable sidebar component
 <CollapsibleResizableSidebar
   width={sidebarWidth}
@@ -587,20 +587,20 @@ useEffect(() => {
 >
   <SidebarContent />
 </CollapsibleResizableSidebar>
-```
+\`\`\`
 
 **Learning Point**: Composition over inheritance for flexible component design.
 
 ### 3. Progressive Enhancement
 
-```typescript
+\`\`\`typescript
 // Graceful degradation for features
 {user ? (
   <AdvancedFeatures />
 ) : (
   <BasicFeatures />
 )}
-```
+\`\`\`
 
 **Learning Point**: Design for all users, enhance for authenticated users.
 
@@ -610,7 +610,7 @@ useEffect(() => {
 
 ### 1. Unit Testing Approach
 
-```typescript
+\`\`\`typescript
 // Test business logic
 describe('FamilyCalendarController', () => {
   test('getFamilyEventsByDay validates day parameter', () => {
@@ -619,11 +619,11 @@ describe('FamilyCalendarController', () => {
     }).toThrow('Day must be between 1 and 7')
   })
 })
-```
+\`\`\`
 
 ### 2. Component Testing
 
-```typescript
+\`\`\`typescript
 // Test component behavior
 describe('FamilyDashboard', () => {
   test('displays family members correctly', () => {
@@ -631,11 +631,11 @@ describe('FamilyDashboard', () => {
     expect(screen.getByText('Sarah')).toBeInTheDocument()
   })
 })
-```
+\`\`\`
 
 ### 3. Integration Testing
 
-```typescript
+\`\`\`typescript
 // Test API endpoints
 describe('Chat API', () => {
   test('returns family events for valid day', async () => {
@@ -646,7 +646,7 @@ describe('Chat API', () => {
     expect(response.status).toBe(200)
   })
 })
-```
+\`\`\`
 
 ---
 
@@ -658,16 +658,16 @@ The application is deployed on Vercel with automatic deployments from the main b
 
 ### 2. Environment Configuration
 
-```typescript
+\`\`\`typescript
 // Environment variables
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 OPENAI_API_KEY=your_openai_api_key
-```
+\`\`\`
 
 ### 3. Build Process
 
-```json
+\`\`\`json
 {
   "scripts": {
     "build": "next build",
@@ -675,7 +675,7 @@ OPENAI_API_KEY=your_openai_api_key
     "start": "next start"
   }
 }
-```
+\`\`\`
 
 ---
 

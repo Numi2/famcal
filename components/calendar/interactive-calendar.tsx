@@ -732,4 +732,4 @@ function isToday(date: Date) {
 
 function isSelected(date: Date) {
   return false // This would be set based on selected date
-} 
+}

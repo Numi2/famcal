@@ -100,4 +100,4 @@ The app now supports user personalization through:
 2. **Multiple Families**: Support for users in multiple families
 3. **Family Settings**: Customizable family preferences
 4. **Data Export**: Export family data
-5. **Advanced Permissions**: Role-based access control 
+5. **Advanced Permissions**: Role-based access control

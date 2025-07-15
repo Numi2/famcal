@@ -56,4 +56,4 @@ body:
       label: Anything else?
       description: Any other details that might help us fix this
     validations:
-      required: false 
+      required: false

@@ -477,4 +477,4 @@ export default function EventForm({
       </div>
     </div>
   )
-} 
+}

@@ -70,4 +70,4 @@ else
 fi
 
 echo -e "${GREEN}✅ All tests passed! GitHub CLI is properly configured.${NC}"
-echo -e "${BLUE}You can now run: pnpm run import-issues${NC}" 
+echo -e "${BLUE}You can now run: pnpm run import-issues${NC}"

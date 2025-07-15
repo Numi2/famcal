@@ -28,4 +28,4 @@
 - Predictive features improve scheduling efficiency
 - Seamless integration with external services
 - Advanced analytics provide valuable insights
-- Family-specific features enhance user experience 
+- Family-specific features enhance user experience

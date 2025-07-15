@@ -9,13 +9,13 @@ Users were experiencing "Unauthorized" errors during the onboarding process when
 ### 1. **Client-Side Session Configuration Issues**
 
 **Problem**: The client-side Supabase client in `lib/supabase/client.ts` was configured with:
-```typescript
+\`\`\`typescript
 auth: {
   autoRefreshToken: false,
   persistSession: false,
   detectSessionInUrl: false
 }
-```
+\`\`\`
 
 **Impact**: 
 - Sessions were not being persisted across page refreshes
@@ -47,7 +47,7 @@ auth: {
 
 **File**: `lib/supabase/client.ts`
 
-```typescript
+\`\`\`typescript
 // Before (broken)
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -65,7 +65,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true
   }
 })
-```
+\`\`\`
 
 **Benefits**:
 - Sessions now persist across page refreshes
@@ -76,7 +76,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
 
 **File**: `middleware.ts` (new file)
 
-```typescript
+\`\`\`typescript
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -108,7 +108,7 @@ export async function middleware(request: NextRequest) {
 
   return supabaseResponse
 }
-```
+\`\`\`
 
 **Benefits**:
 - Proper session cookie management
@@ -124,7 +124,7 @@ export async function middleware(request: NextRequest) {
 - Services now use the provided client or fall back to default client
 - API routes can pass the server-side client to services
 
-```typescript
+\`\`\`typescript
 // Before
 static async createFamilyForUser(userId: string, onboardingData: OnboardingData) {
   // Always used client-side supabase client
@@ -139,13 +139,13 @@ static async createFamilyForUser(
   const client = supabaseClient || supabase
   // Now uses appropriate client based on context
 }
-```
+\`\`\`
 
 ### 4. **Enhanced API Route Error Handling**
 
 **File**: `app/api/family/setup/route.ts`
 
-```typescript
+\`\`\`typescript
 // Before
 const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -165,7 +165,7 @@ if (!user) {
   console.error('No user found in session')
   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 }
-```
+\`\`\`
 
 **Benefits**:
 - Better error logging and debugging
@@ -202,10 +202,10 @@ if (!user) {
 
 ### Environment Variables Required
 
-```env
+\`\`\`env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
+\`\`\`
 
 ### Vercel Deployment
 
@@ -229,13 +229,13 @@ Since the user mentioned that environment variables are correctly set up on Verc
 
 ### Debug Commands
 
-```bash
+\`\`\`bash
 # Check authentication in browser console
 supabase.auth.getUser()
 
 # Check server logs for auth errors
 # Look for "Auth error:" or "No user found in session" messages
-```
+\`\`\`
 
 ## Future Improvements
 

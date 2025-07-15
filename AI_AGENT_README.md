@@ -47,22 +47,22 @@ The chat interface provides:
 ## Usage Examples
 
 ### Scheduling Events
-```
+\`\`\`
 User: "Schedule a dentist appointment for next Tuesday at 2pm"
 Agent: [Uses parseNaturalTime → findFreeSlot → createEvent]
-```
+\`\`\`
 
 ### Finding Free Time
-```
+\`\`\`
 User: "Find a 2-hour slot this week for a family activity"
 Agent: [Uses findFreeSlot with family context]
-```
+\`\`\`
 
 ### Event Management
-```
+\`\`\`
 User: "What events do we have today?"
 Agent: [Uses listEvents with today's date range]
-```
+\`\`\`
 
 ## Integration
 
@@ -111,4 +111,4 @@ To test the agent:
 1. Start the development server
 2. Authenticate with a user account
 3. Click the AI assistant button
-4. Try natural language commands like "Schedule a meeting for tomorrow" 
+4. Try natural language commands like "Schedule a meeting for tomorrow"

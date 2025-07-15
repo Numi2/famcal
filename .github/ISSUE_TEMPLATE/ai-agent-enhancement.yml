@@ -48,4 +48,4 @@ body:
       description: Show us how you'd use this feature
       placeholder: "For example, when I say '...' the AI could..."
     validations:
-      required: false 
+      required: false

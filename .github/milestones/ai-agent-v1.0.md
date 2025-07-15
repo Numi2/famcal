@@ -24,4 +24,4 @@
 - Agent can find free time slots within specified windows
 - Chat interface provides smooth user experience
 - All operations are properly validated and error-handled
-- Integration with existing family calendar system 
+- Integration with existing family calendar system
