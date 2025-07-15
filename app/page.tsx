@@ -22,6 +22,8 @@ import {
 import { FamilyCalendarController } from "@/lib/family/controller"
 import { FamilyCalendarPresenter } from "@/lib/family/presenter"
 import { CalendarController } from "@/lib/calendar/controller"
+import { useTimezone } from "@/lib/hooks/use-timezone"
+import { formatTimeInTimezone, formatDateTimeInTimezone } from "@/lib/utils/timezone"
 import CollapsibleResizableSidebar from "@/components/ui/collapsible-resizable-sidebar"
 import CollapsedSidebarContent from "@/components/family-dashboard/collapsed-sidebar-content"
 import MobileSidebarOverlay from "@/components/ui/mobile-sidebar-overlay"
@@ -37,6 +39,7 @@ import { useFamilyId } from "@/lib/hooks/use-family-id"
 import type { CalendarEvent } from "@/lib/calendar/types"
 
 export default function FamilyCalendarHome() {
+  const { timezone } = useTimezone()
   const [isLoaded, setIsLoaded] = useState(false)
   const [currentView, setCurrentView] = useState<"week" | "month" | "day">("week")
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -134,22 +137,22 @@ export default function FamilyCalendarHome() {
   const handleEventFormSubmit = (eventData: Omit<CalendarEvent, "id">) => {
     if (selectedEventForEdit) {
       // Update existing event
-      const result = CalendarController.updateEvent(selectedEventForEdit.id, eventData)
+      const result = CalendarController.updateEvent(selectedEventForEdit.id, eventData, timezone)
       if (result.success) {
         console.log("Event updated successfully")
-        // Refresh events
-        const events = CalendarController.getAllEvents()
+        // Refresh events with timezone consideration
+        const events = CalendarController.getEventsForDisplay(timezone)
         setFamilyEvents(events)
       } else {
         console.error("Failed to update event:", result.message)
       }
     } else {
       // Create new event
-      const result = CalendarController.createEvent(eventData)
+      const result = CalendarController.createEvent(eventData, timezone)
       if (result.success) {
         console.log("Event created successfully")
-        // Refresh events
-        const events = CalendarController.getAllEvents()
+        // Refresh events with timezone consideration
+        const events = CalendarController.getEventsForDisplay(timezone)
         setFamilyEvents(events)
       } else {
         console.error("Failed to create event:", result.message)
@@ -168,8 +171,8 @@ export default function FamilyCalendarHome() {
     const result = CalendarController.deleteEvent(event.id)
     if (result.success) {
       console.log("Event deleted successfully")
-      // Refresh events
-      const events = CalendarController.getAllEvents()
+      // Refresh events with timezone consideration
+      const events = CalendarController.getEventsForDisplay(timezone)
       setFamilyEvents(events)
       setSelectedEvent(null)
     } else {
@@ -642,8 +645,15 @@ export default function FamilyCalendarHome() {
               <div className="flex items-center gap-3">
                 <Clock className="h-5 w-5 text-gray-500 flex-shrink-0" />
                 <span className="text-gray-700">
-                  {selectedEvent.formattedTime || `${selectedEvent.startTime} - ${selectedEvent.endTime}`}
+                  {selectedEvent.startDateTime && selectedEvent.endDateTime
+                    ? `${formatTimeInTimezone(selectedEvent.startDateTime, timezone)} - ${formatTimeInTimezone(selectedEvent.endDateTime, timezone)}`
+                    : selectedEvent.formattedTime || `${selectedEvent.startTime} - ${selectedEvent.endTime}`}
                 </span>
+                {selectedEvent.timezone && selectedEvent.timezone !== timezone && (
+                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                    {selectedEvent.timezone}
+                  </span>
+                )}
               </div>
 
               {selectedEvent.location && (

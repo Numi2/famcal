@@ -2,6 +2,15 @@
  * Calendar Controller - Handles business logic and validation
  */
 import { CalendarModel } from "./model"
+import { 
+  getUserTimezone, 
+  isLegacyTimeFormat, 
+  dayAndTimeToDateTime, 
+  convertDateTimeToLegacyFormat,
+  formatTimeInTimezone,
+  extractDayFromDateTime,
+  extractTimeFromDateTime
+} from "@/lib/utils/timezone"
 import type {
   CalendarEvent,
   TimeSlot,
@@ -13,10 +22,11 @@ import type {
 
 export const CalendarController = {
   /**
-   * Get all events
+   * Get all events, converting legacy time format to timezone-aware format
    */
   getAllEvents() {
-    return CalendarModel.getAllEvents()
+    const events = CalendarModel.getAllEvents()
+    return events.map(event => this.enhanceEventWithTimezone(event))
   },
 
   /**
@@ -28,7 +38,8 @@ export const CalendarController = {
       throw new Error("Day must be between 1 and 7")
     }
 
-    return CalendarModel.getEventsByDay(day)
+    const events = CalendarModel.getEventsByDay(day)
+    return events.map(event => this.enhanceEventWithTimezone(event))
   },
 
   /**
@@ -44,7 +55,8 @@ export const CalendarController = {
       throw new Error("Start day must be before or equal to end day")
     }
 
-    return CalendarModel.getEventsByDateRange(startDay, endDay)
+    const events = CalendarModel.getEventsByDateRange(startDay, endDay)
+    return events.map(event => this.enhanceEventWithTimezone(event))
   },
 
   /**
@@ -61,13 +73,16 @@ export const CalendarController = {
       throw new Error("Event not found")
     }
 
-    return event
+    return this.enhanceEventWithTimezone(event)
   },
 
   /**
-   * Create a new event
+   * Create a new event with timezone awareness
    */
-  createEvent(eventData: Omit<CalendarEvent, "id">): EventCreationResult {
+  createEvent(eventData: Omit<CalendarEvent, "id">, userTimezone?: string): EventCreationResult {
+    // Get user's timezone
+    const timezone = userTimezone || getUserTimezone()
+    
     // Validate required fields
     if (!eventData.title) {
       return {
@@ -83,7 +98,27 @@ export const CalendarController = {
       }
     }
 
-    if (eventData.day < 1 || eventData.day > 7) {
+    // Handle timezone-aware datetime creation
+    let processedEventData = { ...eventData }
+    
+    if (isLegacyTimeFormat(eventData.startTime) && isLegacyTimeFormat(eventData.endTime)) {
+      // Convert legacy format to timezone-aware datetimes
+      const startDateTime = dayAndTimeToDateTime(eventData.day, eventData.startTime, timezone)
+      const endDateTime = dayAndTimeToDateTime(eventData.day, eventData.endTime, timezone)
+      
+      processedEventData = {
+        ...eventData,
+        startDateTime,
+        endDateTime,
+        timezone,
+        // Keep legacy format for backward compatibility
+        day: extractDayFromDateTime(startDateTime, timezone),
+        startTime: extractTimeFromDateTime(startDateTime, timezone),
+        endTime: extractTimeFromDateTime(endDateTime, timezone)
+      }
+    }
+
+    if (processedEventData.day < 1 || processedEventData.day > 7) {
       return {
         success: false,
         message: "Day must be between 1 and 7",
@@ -93,7 +128,7 @@ export const CalendarController = {
     // Validate time format and logic
     const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/
 
-    if (!timeRegex.test(eventData.startTime) || !timeRegex.test(eventData.endTime)) {
+    if (!timeRegex.test(processedEventData.startTime) || !timeRegex.test(processedEventData.endTime)) {
       return {
         success: false,
         message: "Times must be in HH:MM format",
@@ -101,8 +136,8 @@ export const CalendarController = {
     }
 
     // Check that end time is after start time
-    const [startHour, startMinute] = eventData.startTime.split(":").map(Number)
-    const [endHour, endMinute] = eventData.endTime.split(":").map(Number)
+    const [startHour, startMinute] = processedEventData.startTime.split(":").map(Number)
+    const [endHour, endMinute] = processedEventData.endTime.split(":").map(Number)
 
     const startMinutes = startHour * 60 + startMinute
     const endMinutes = endHour * 60 + endMinute
@@ -115,13 +150,19 @@ export const CalendarController = {
     }
 
     // Create the event
-    return CalendarModel.createEvent(eventData)
+    const result = CalendarModel.createEvent(processedEventData)
+    
+    if (result.success && result.event) {
+      result.event = this.enhanceEventWithTimezone(result.event)
+    }
+    
+    return result
   },
 
   /**
-   * Update an existing event
+   * Update an existing event with timezone awareness
    */
-  updateEvent(id: number, eventData: Partial<CalendarEvent>): EventUpdateResult {
+  updateEvent(id: number, eventData: Partial<CalendarEvent>, userTimezone?: string): EventUpdateResult {
     // Validate ID
     if (id <= 0) {
       return {
@@ -130,13 +171,38 @@ export const CalendarController = {
       }
     }
 
+    // Get user's timezone
+    const timezone = userTimezone || getUserTimezone()
+    
+    // Handle timezone-aware datetime updates
+    let processedEventData = { ...eventData }
+    
+    if (eventData.startTime && eventData.endTime && eventData.day) {
+      if (isLegacyTimeFormat(eventData.startTime) && isLegacyTimeFormat(eventData.endTime)) {
+        // Convert legacy format to timezone-aware datetimes
+        const startDateTime = dayAndTimeToDateTime(eventData.day, eventData.startTime, timezone)
+        const endDateTime = dayAndTimeToDateTime(eventData.day, eventData.endTime, timezone)
+        
+        processedEventData = {
+          ...eventData,
+          startDateTime,
+          endDateTime,
+          timezone,
+          // Update legacy format for backward compatibility
+          day: extractDayFromDateTime(startDateTime, timezone),
+          startTime: extractTimeFromDateTime(startDateTime, timezone),
+          endTime: extractTimeFromDateTime(endDateTime, timezone)
+        }
+      }
+    }
+
     // Validate time format if provided
-    if (eventData.startTime || eventData.endTime) {
+    if (processedEventData.startTime || processedEventData.endTime) {
       const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/
 
       if (
-        (eventData.startTime && !timeRegex.test(eventData.startTime)) ||
-        (eventData.endTime && !timeRegex.test(eventData.endTime))
+        (processedEventData.startTime && !timeRegex.test(processedEventData.startTime)) ||
+        (processedEventData.endTime && !timeRegex.test(processedEventData.endTime))
       ) {
         return {
           success: false,
@@ -145,9 +211,9 @@ export const CalendarController = {
       }
 
       // If both times are provided, check that end time is after start time
-      if (eventData.startTime && eventData.endTime) {
-        const [startHour, startMinute] = eventData.startTime.split(":").map(Number)
-        const [endHour, endMinute] = eventData.endTime.split(":").map(Number)
+      if (processedEventData.startTime && processedEventData.endTime) {
+        const [startHour, startMinute] = processedEventData.startTime.split(":").map(Number)
+        const [endHour, endMinute] = processedEventData.endTime.split(":").map(Number)
 
         const startMinutes = startHour * 60 + startMinute
         const endMinutes = endHour * 60 + endMinute
@@ -162,7 +228,7 @@ export const CalendarController = {
     }
 
     // Validate day if provided
-    if (eventData.day !== undefined && (eventData.day < 1 || eventData.day > 7)) {
+    if (processedEventData.day !== undefined && (processedEventData.day < 1 || processedEventData.day > 7)) {
       return {
         success: false,
         message: "Day must be between 1 and 7",
@@ -170,7 +236,13 @@ export const CalendarController = {
     }
 
     // Update the event
-    return CalendarModel.updateEvent(id, eventData)
+    const result = CalendarModel.updateEvent(id, processedEventData)
+    
+    if (result.success && result.event) {
+      result.event = this.enhanceEventWithTimezone(result.event)
+    }
+    
+    return result
   },
 
   /**
@@ -229,7 +301,8 @@ export const CalendarController = {
       throw new Error("Search query cannot be empty")
     }
 
-    return CalendarModel.searchEvents(query)
+    const events = CalendarModel.searchEvents(query)
+    return events.map(event => this.enhanceEventWithTimezone(event))
   },
 
   /**
@@ -244,4 +317,51 @@ export const CalendarController = {
 
     return dayNames[day - 1]
   },
+
+  /**
+   * Get events for display in user's timezone
+   */
+  getEventsForDisplay(userTimezone?: string): CalendarEvent[] {
+    const timezone = userTimezone || getUserTimezone()
+    const events = this.getAllEvents()
+    
+    return events.map(event => {
+      if (event.startDateTime && event.endDateTime) {
+        // Convert to user's timezone for display
+        return {
+          ...event,
+          startTime: formatTimeInTimezone(event.startDateTime, timezone),
+          endTime: formatTimeInTimezone(event.endDateTime, timezone),
+          day: extractDayFromDateTime(event.startDateTime, timezone)
+        }
+      }
+      return event
+    })
+  },
+
+  /**
+   * Private helper to enhance event with timezone information
+   */
+  enhanceEventWithTimezone(event: CalendarEvent): CalendarEvent {
+    // If event already has timezone-aware datetimes, return as-is
+    if (event.startDateTime && event.endDateTime) {
+      return event
+    }
+
+    // Convert legacy format to timezone-aware if needed
+    if (isLegacyTimeFormat(event.startTime) && isLegacyTimeFormat(event.endTime)) {
+      const timezone = event.timezone || getUserTimezone()
+      const startDateTime = dayAndTimeToDateTime(event.day, event.startTime, timezone)
+      const endDateTime = dayAndTimeToDateTime(event.day, event.endTime, timezone)
+      
+      return {
+        ...event,
+        startDateTime,
+        endDateTime,
+        timezone
+      }
+    }
+
+    return event
+  }
 }
