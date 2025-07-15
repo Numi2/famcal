@@ -1,5 +1,5 @@
 name: Bug Report
-description: Report a bug in the Family Calendar application
+description: Something isn't working right? Let us know!
 title: "[Bug] "
 labels: ["bug"]
 assignees: []
@@ -7,108 +7,53 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to report a bug! 🐛
+        Thanks for helping us improve the Family Calendar! 🐛
   
   - type: textarea
-    id: bug-description
+    id: what-happened
     attributes:
-      label: Bug Description
-      description: A clear and concise description of what the bug is
-      placeholder: "The AI agent doesn't respond when I say..."
-    validations:
-      required: true
-  
-  - type: dropdown
-    id: component
-    attributes:
-      label: Component
-      description: Which part of the application is affected?
-      options:
-        - "AI Agent"
-        - "Calendar"
-        - "Authentication"
-        - "Family Dashboard"
-        - "Event Management"
-        - "UI/UX"
-        - "Database"
-        - "Other"
-    validations:
-      required: true
-  
-  - type: dropdown
-    id: severity
-    attributes:
-      label: Severity
-      description: How severe is this bug?
-      options:
-        - "Low - Minor inconvenience"
-        - "Medium - Affects functionality"
-        - "High - Breaks core feature"
-        - "Critical - Application unusable"
+      label: What happened?
+      description: Tell us what went wrong in simple terms
+      placeholder: "When I tried to... this happened instead..."
     validations:
       required: true
   
   - type: textarea
-    id: steps-to-reproduce
+    id: what-expected
     attributes:
-      label: Steps to Reproduce
-      description: How can we reproduce this bug?
-      placeholder: |
-        1. Go to the AI assistant
-        2. Type "Schedule a meeting"
-        3. See error message
-    validations:
-      required: true
-  
-  - type: textarea
-    id: expected-behavior
-    attributes:
-      label: Expected Behavior
-      description: What should happen instead?
-      placeholder: "The AI should schedule a meeting and confirm the details"
-    validations:
-      required: true
-  
-  - type: textarea
-    id: actual-behavior
-    attributes:
-      label: Actual Behavior
-      description: What actually happened?
-      placeholder: "The AI shows an error and doesn't create the event"
+      label: What should have happened?
+      description: What did you expect to happen?
+      placeholder: "I expected it to..."
     validations:
       required: true
   
   - type: dropdown
-    id: browser
+    id: area
     attributes:
-      label: Browser
-      description: What browser are you using?
+      label: Which area?
+      description: Which part of the app had the problem?
       options:
-        - "Chrome"
-        - "Firefox"
-        - "Safari"
-        - "Edge"
-        - "Other"
+        - "Talking to the AI assistant"
+        - "Viewing the calendar"
+        - "Creating events"
+        - "Signing in"
+        - "Something else"
     validations:
-      required: false
+      required: true
   
-  - type: dropdown
-    id: device
+  - type: textarea
+    id: steps
     attributes:
-      label: Device
-      description: What device are you using?
-      options:
-        - "Desktop"
-        - "Tablet"
-        - "Mobile"
+      label: How can we recreate this?
+      description: Tell us step by step what you did
+      placeholder: "1. I clicked on... 2. Then I..."
     validations:
       required: false
   
   - type: textarea
-    id: additional-context
+    id: additional
     attributes:
-      label: Additional Context
-      description: Any other context about the problem
-      placeholder: "This happens when I'm logged in as a parent user..."
+      label: Anything else?
+      description: Any other details that might help us fix this
     validations:
       required: false 
