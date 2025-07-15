@@ -10,6 +10,19 @@
 This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
 Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
 
+## ⚠️ Important: Setup Required
+
+**If you're experiencing authentication issues**, you need to configure your Supabase environment variables. See the [Supabase Setup Guide](./supabase-setup-guide.md) for detailed instructions.
+
+### Quick Setup:
+1. Create a `.env.local` file in your project root
+2. Add your Supabase credentials:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+3. Restart your development server: `pnpm run dev`
+
 ## Deployment
 
 Your project is live at:
