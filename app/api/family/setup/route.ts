@@ -12,10 +12,27 @@ export async function POST(request: NextRequest) {
       error: authError,
     } = await supabase.auth.getUser()
 
-    if (authError || !user) {
-      console.error("Auth error:", authError?.message || "No user found in session")
-      return NextResponse.json({ error: "Authentication failed" }, { status: 401 })
+    if (authError) {
+      console.error("Supabase auth error:", {
+        message: authError.message,
+        status: authError.status,
+        details: authError
+      })
+      return NextResponse.json({ 
+        error: "Authentication failed", 
+        details: authError.message 
+      }, { status: 401 })
     }
+
+    if (!user) {
+      console.error("No user found in session - potential session/cookie issue")
+      return NextResponse.json({ 
+        error: "No authenticated user found", 
+        details: "Session may have expired or cookies are not being set properly" 
+      }, { status: 401 })
+    }
+
+    console.log("User authenticated successfully:", user.id)
 
     const body = await request.json()
     const { familyName, familyDescription, members } = body
