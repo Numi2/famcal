@@ -21,6 +21,7 @@ import {
 } from "lucide-react"
 import { FamilyCalendarController } from "@/lib/family/controller"
 import { FamilyCalendarPresenter } from "@/lib/family/presenter"
+import { CalendarController } from "@/lib/calendar/controller"
 import CollapsibleResizableSidebar from "@/components/ui/collapsible-resizable-sidebar"
 import CollapsedSidebarContent from "@/components/family-dashboard/collapsed-sidebar-content"
 import MobileSidebarOverlay from "@/components/ui/mobile-sidebar-overlay"
@@ -28,14 +29,17 @@ import AdaptiveStats from "@/components/family-dashboard/adaptive-stats"
 import ResponsiveQuickActions from "@/components/family-dashboard/responsive-quick-actions"
 import ChildrenOverview from "@/components/family-dashboard/children-overview"
 import AuthModal from "@/components/auth/auth-modal"
+import InteractiveCalendar from "@/components/calendar/interactive-calendar"
+import EventForm from "@/components/calendar/event-form"
 import { useAuth } from "@/lib/auth/auth-context"
+import type { CalendarEvent } from "@/lib/calendar/types"
 
 export default function FamilyCalendarHome() {
   const [isLoaded, setIsLoaded] = useState(false)
-  const [currentView, setCurrentView] = useState("week")
+  const [currentView, setCurrentView] = useState<"week" | "month" | "day">("week")
   const [currentMonth, setCurrentMonth] = useState("March 2025")
   const [currentDate, setCurrentDate] = useState("March 5")
-  const [selectedEvent, setSelectedEvent] = useState(null)
+  const [selectedEvent, setSelectedEvent] = useState<any>(null)
   const [activeTab, setActiveTab] = useState("calendar")
   const [showDashboard, setShowDashboard] = useState(false)
   const [sidebarWidth, setSidebarWidth] = useState(320)
@@ -43,13 +47,17 @@ export default function FamilyCalendarHome() {
   const [showMobileSidebar, setShowMobileSidebar] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [showEventForm, setShowEventForm] = useState(false)
+  const [selectedEventForEdit, setSelectedEventForEdit] = useState<CalendarEvent | null>(null)
+  const [selectedDateForEvent, setSelectedDateForEvent] = useState<Date | null>(null)
+  const [selectedTimeForEvent, setSelectedTimeForEvent] = useState<string | null>(null)
 
   // Family data
-  const [familyMembers, setFamilyMembers] = useState([])
-  const [familyEvents, setFamilyEvents] = useState([])
-  const [familyInsights, setFamilyInsights] = useState([])
-  const [todayMeals, setTodayMeals] = useState([])
-  const [pendingChores, setPendingChores] = useState([])
+  const [familyMembers, setFamilyMembers] = useState<any[]>([])
+  const [familyEvents, setFamilyEvents] = useState<any[]>([])
+  const [familyInsights, setFamilyInsights] = useState<any[]>([])
+  const [todayMeals, setTodayMeals] = useState<any[]>([])
+  const [pendingChores, setPendingChores] = useState<any[]>([])
 
   // Add auth hook
   const { user, loading: authLoading } = useAuth()
@@ -81,8 +89,89 @@ export default function FamilyCalendarHome() {
     return () => window.removeEventListener("resize", checkMobile)
   }, [])
 
-  const handleEventClick = (event) => {
-    setSelectedEvent(event)
+  const handleEventClick = (event: any) => {
+    // Normalize the event data to handle both calendar events and family events
+    const normalizedEvent = {
+      ...event,
+      // Ensure we have the required properties
+      title: event.title || event.name || 'Untitled Event',
+      startTime: event.startTime || '00:00',
+      endTime: event.endTime || '01:00',
+      description: event.description || '',
+      location: event.location || '',
+      attendees: event.attendees || event.assignedMemberNames || [],
+      organizer: event.organizer || '',
+      color: event.color || 'bg-blue-500',
+      type: event.type || 'event',
+      typeIcon: event.typeIcon || '📅',
+      priority: event.priority || null,
+      priorityColor: event.priorityColor || 'bg-gray-100 text-gray-800',
+      formattedTime: event.formattedTime || `${event.startTime || '00:00'} - ${event.endTime || '01:00'}`,
+      assignedMemberNames: event.assignedMemberNames || event.attendees || []
+    }
+    setSelectedEvent(normalizedEvent)
+  }
+
+  // Interactive Calendar Handlers
+  const handleDateSelect = (date: Date) => {
+    console.log("Date selected:", date)
+  }
+
+  const handleAddEvent = (date: Date, timeSlot?: string) => {
+    if (user) {
+      setSelectedDateForEvent(date)
+      setSelectedTimeForEvent(timeSlot || null)
+      setSelectedEventForEdit(null)
+      setShowEventForm(true)
+    } else {
+      setShowAuthModal(true)
+    }
+  }
+
+  const handleEventFormSubmit = (eventData: Omit<CalendarEvent, "id">) => {
+    if (selectedEventForEdit) {
+      // Update existing event
+      const result = CalendarController.updateEvent(selectedEventForEdit.id, eventData)
+      if (result.success) {
+        console.log("Event updated successfully")
+        // Refresh events
+        const events = CalendarController.getAllEvents()
+        setFamilyEvents(events)
+      } else {
+        console.error("Failed to update event:", result.message)
+      }
+    } else {
+      // Create new event
+      const result = CalendarController.createEvent(eventData)
+      if (result.success) {
+        console.log("Event created successfully")
+        // Refresh events
+        const events = CalendarController.getAllEvents()
+        setFamilyEvents(events)
+      } else {
+        console.error("Failed to create event:", result.message)
+      }
+    }
+  }
+
+  const handleEditEvent = (event: CalendarEvent) => {
+    setSelectedEventForEdit(event)
+    setSelectedDateForEvent(null)
+    setSelectedTimeForEvent(null)
+    setShowEventForm(true)
+  }
+
+  const handleDeleteEvent = (event: CalendarEvent) => {
+    const result = CalendarController.deleteEvent(event.id)
+    if (result.success) {
+      console.log("Event deleted successfully")
+      // Refresh events
+      const events = CalendarController.getAllEvents()
+      setFamilyEvents(events)
+      setSelectedEvent(null)
+    } else {
+      console.error("Failed to delete event:", result.message)
+    }
   }
 
   const handleSidebarWidthChange = (width: number) => {
@@ -95,20 +184,6 @@ export default function FamilyCalendarHome() {
 
   const toggleMobileSidebar = () => {
     setShowMobileSidebar(!showMobileSidebar)
-  }
-
-  // Calendar days for the week view
-  const weekDays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
-  const weekDates = [3, 4, 5, 6, 7, 8, 9]
-  const timeSlots = Array.from({ length: 12 }, (_, i) => i + 7) // 7 AM to 6 PM
-
-  // Helper function to calculate event position and height
-  const calculateEventStyle = (startTime, endTime) => {
-    const start = Number.parseInt(startTime.split(":")[0]) + Number.parseInt(startTime.split(":")[1]) / 60
-    const end = Number.parseInt(endTime.split(":")[0]) + Number.parseInt(endTime.split(":")[1]) / 60
-    const top = (start - 7) * 60 // 60px per hour
-    const height = (end - start) * 60
-    return { top: `${top}px`, height: `${height}px` }
   }
 
   // Mini calendar
@@ -130,7 +205,10 @@ export default function FamilyCalendarHome() {
           onClick={() => {
             if (user) {
               // User is authenticated, show add event form
-              console.log("Show add event form")
+              setSelectedEventForEdit(null)
+              setSelectedDateForEvent(null)
+              setSelectedTimeForEvent(null)
+              setShowEventForm(true)
             } else {
               // User not authenticated, show auth modal
               setShowAuthModal(true)
@@ -139,7 +217,7 @@ export default function FamilyCalendarHome() {
           className="mb-3 md:mb-4 flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 px-3 md:px-4 py-2 md:py-3 text-white w-full hover:from-pink-600 hover:to-purple-700 transition-all text-sm md:text-base"
         >
           <Plus className="h-4 w-4 md:h-5 md:w-5" />
-          <span>Add</span>
+          <span>Add Event</span>
         </button>
 
         {/* Tab Navigation */}
@@ -418,7 +496,6 @@ export default function FamilyCalendarHome() {
             maxWidth={500}
             collapsedWidth={60}
             className={`h-full bg-white/10 backdrop-blur-lg shadow-xl border-r border-white/20 rounded-tr-3xl opacity-0 ${isLoaded ? "animate-fade-in" : ""}`}
-            style={{ animationDelay: "0.4s" }}
             onWidthChange={handleSidebarWidthChange}
             onCollapseChange={handleSidebarCollapseChange}
           >
@@ -430,101 +507,35 @@ export default function FamilyCalendarHome() {
           </CollapsibleResizableSidebar>
         </div>
 
-        {/* Calendar View */}
+        {/* Interactive Calendar */}
         <div
           className={`flex-1 flex flex-col opacity-0 min-w-0 ${isLoaded ? "animate-fade-in" : ""}`}
           style={{ animationDelay: "0.6s" }}
         >
-          {/* Calendar Controls */}
-          <div className="flex items-center justify-between p-3 md:p-6 bg-white/5 backdrop-blur-sm">
-            <div className="flex items-center gap-2 md:gap-4 min-w-0">
-              <h2 className="text-lg md:text-2xl font-bold text-white drop-shadow-lg truncate">Family Week View</h2>
-              <div className="hidden sm:flex items-center gap-2 bg-white/20 rounded-full px-2 md:px-3 py-1">
-                <Clock className="h-3 w-3 md:h-4 md:w-4 text-white" />
-                <span className="text-white text-xs md:text-sm">March 3-9, 2025</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
-              <button className="px-2 md:px-4 py-1 md:py-2 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors text-xs md:text-sm">
-                Today
-              </button>
-              <div className="flex gap-1">
-                <button className="p-1 md:p-2 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors">
-                  <ChevronLeft className="h-4 w-4 md:h-5 md:w-5 text-white" />
-                </button>
-                <button className="p-1 md:p-2 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors">
-                  <ChevronRight className="h-4 w-4 md:h-5 md:w-5 text-white" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Week Calendar Grid */}
-          <div className="flex-1 overflow-auto bg-white/5 backdrop-blur-sm m-2 md:m-4 rounded-2xl">
-            <div className="grid grid-cols-8 min-h-full min-w-[800px]">
-              {/* Time column */}
-              <div className="border-r border-white/20">
-                <div className="h-12 md:h-16 border-b border-white/20"></div>
-                {timeSlots.map((hour) => (
-                  <div
-                    key={hour}
-                    className="h-12 md:h-16 border-b border-white/20 flex items-start justify-end pr-2 md:pr-3 pt-1"
-                  >
-                    <span className="text-xs text-white/70">{hour}:00</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Day columns */}
-              {weekDays.map((day, dayIndex) => (
-                <div key={day} className="border-r border-white/20 relative min-w-[100px]">
-                  {/* Day header */}
-                  <div className="h-12 md:h-16 border-b border-white/20 flex flex-col items-center justify-center">
-                    <span className="text-xs text-white/70 font-medium">{day}</span>
-                    <span
-                      className={`text-sm md:text-lg font-bold ${dayIndex === 1 ? "text-purple-300" : "text-white"}`}
-                    >
-                      {weekDates[dayIndex]}
-                    </span>
-                  </div>
-
-                  {/* Time slots */}
-                  {timeSlots.map((hour) => (
-                    <div key={hour} className="h-12 md:h-16 border-b border-white/10"></div>
-                  ))}
-
-                  {/* Events for this day */}
-                  {familyEvents
-                    .filter((event) => event.day === dayIndex + 1)
-                    .map((event) => {
-                      const style = calculateEventStyle(event.startTime, event.endTime)
-                      return (
-                        <div
-                          key={event.id}
-                          className={`absolute left-1 right-1 ${event.color} rounded-lg p-1 md:p-2 text-white text-xs cursor-pointer hover:shadow-lg transition-all z-10 touch-manipulation`}
-                          style={style}
-                          onClick={() => handleEventClick(event)}
-                        >
-                          <div className="font-medium truncate text-xs">{event.title}</div>
-                          <div className="text-white/80 truncate text-xs">{event.formattedTime}</div>
-                          <div className="flex items-center gap-1 mt-1">
-                            {event.assignedMemberNames.slice(0, 2).map((name, i) => (
-                              <span key={i} className="text-xs bg-white/20 rounded px-1 truncate max-w-[60px]">
-                                {name}
-                              </span>
-                            ))}
-                            {event.typeIcon && <span className="ml-1 flex-shrink-0">{event.typeIcon}</span>}
-                          </div>
-                        </div>
-                      )
-                    })}
-                </div>
-              ))}
-            </div>
-          </div>
+          <InteractiveCalendar
+            currentView={currentView}
+            onViewChange={setCurrentView}
+            onEventClick={handleEventClick}
+            onDateSelect={handleDateSelect}
+            onAddEvent={handleAddEvent}
+          />
         </div>
       </main>
+
+      {/* Event Form Modal */}
+      <EventForm
+        isOpen={showEventForm}
+        onClose={() => {
+          setShowEventForm(false)
+          setSelectedEventForEdit(null)
+          setSelectedDateForEvent(null)
+          setSelectedTimeForEvent(null)
+        }}
+        onSubmit={handleEventFormSubmit}
+        event={selectedEventForEdit}
+        selectedDate={selectedDateForEvent || undefined}
+        selectedTime={selectedTimeForEvent || undefined}
+      />
 
       {/* Event Detail Modal */}
       {selectedEvent && (
@@ -543,7 +554,9 @@ export default function FamilyCalendarHome() {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <Clock className="h-5 w-5 text-gray-500 flex-shrink-0" />
-                <span className="text-gray-700">{selectedEvent.formattedTime}</span>
+                <span className="text-gray-700">
+                  {selectedEvent.formattedTime || `${selectedEvent.startTime} - ${selectedEvent.endTime}`}
+                </span>
               </div>
 
               {selectedEvent.location && (
@@ -556,11 +569,21 @@ export default function FamilyCalendarHome() {
               <div className="flex items-center gap-3">
                 <Users className="h-5 w-5 text-gray-500 flex-shrink-0" />
                 <div className="flex flex-wrap gap-1">
-                  {selectedEvent.assignedMemberNames.map((name, i) => (
-                    <span key={i} className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs">
-                      {name}
-                    </span>
-                  ))}
+                  {selectedEvent.assignedMemberNames && selectedEvent.assignedMemberNames.length > 0 ? (
+                    selectedEvent.assignedMemberNames.map((name: string, i: number) => (
+                      <span key={i} className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs">
+                        {name}
+                      </span>
+                    ))
+                  ) : selectedEvent.attendees && selectedEvent.attendees.length > 0 ? (
+                    selectedEvent.attendees.map((attendee: string, i: number) => (
+                      <span key={i} className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs">
+                        {attendee}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-gray-500 text-xs">No attendees</span>
+                  )}
                 </div>
               </div>
 
@@ -571,9 +594,13 @@ export default function FamilyCalendarHome() {
               )}
 
               <div className="flex items-center gap-2 mt-4">
-                <span className="text-2xl">{selectedEvent.typeIcon}</span>
-                <span className="text-sm text-gray-500 capitalize">{selectedEvent.type.replace("-", " ")}</span>
-                {selectedEvent.priority && (
+                {selectedEvent.typeIcon && <span className="text-2xl">{selectedEvent.typeIcon}</span>}
+                {selectedEvent.type && (
+                  <span className="text-sm text-gray-500 capitalize">
+                    {selectedEvent.type.replace("-", " ")}
+                  </span>
+                )}
+                {selectedEvent.priority && selectedEvent.priorityColor && (
                   <span className={`px-2 py-1 rounded-full text-xs ${selectedEvent.priorityColor}`}>
                     {selectedEvent.priority}
                   </span>
@@ -582,10 +609,21 @@ export default function FamilyCalendarHome() {
             </div>
 
             <div className="flex gap-3 mt-6">
-              <button className="flex-1 bg-purple-500 text-white py-3 px-4 rounded-lg hover:bg-purple-600 transition-colors text-sm md:text-base touch-manipulation">
+              <button 
+                onClick={() => {
+                  handleEditEvent(selectedEvent)
+                  setSelectedEvent(null)
+                }}
+                className="flex-1 bg-purple-500 text-white py-3 px-4 rounded-lg hover:bg-purple-600 transition-colors text-sm md:text-base touch-manipulation"
+              >
                 Edit Event
               </button>
-              <button className="px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm md:text-base touch-manipulation">
+              <button 
+                onClick={() => {
+                  handleDeleteEvent(selectedEvent)
+                }}
+                className="px-4 py-3 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm md:text-base touch-manipulation"
+              >
                 Delete
               </button>
             </div>
