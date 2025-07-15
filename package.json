@@ -10,8 +10,7 @@
     "import-issues": "chmod +x scripts/import-github-issues.sh && ./scripts/import-github-issues.sh",
     "setup-hooks": "chmod +x .git/hooks/pre-push",
     "setup-github-import": "chmod +x scripts/setup-github-import.sh && ./scripts/setup-github-import.sh",
-    "test-github": "chmod +x scripts/test-github-setup.sh && ./scripts/test-github-setup.sh",
-    "create-labels": "chmod +x scripts/create-labels.sh && ./scripts/create-labels.sh"
+    "test-github": "chmod +x scripts/test-github-setup.sh && ./scripts/test-github-setup.sh"
   },
   "dependencies": {
     "@ai-sdk/openai": "latest",

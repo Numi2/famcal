@@ -44,9 +44,10 @@ This document provides an overview of all planned issues and milestones for the 
 ### High Priority
 1. **[v1.1] Implement Full RRULE Support for Recurring Events** - `recurring-events.md`
 2. **[v1.1] Implement Smart Conflict Detection and Resolution** - `conflict-detection.md`
-3. **[v2.0] Implement Predictive Scheduling with Machine Learning** - `predictive-scheduling.md`
-4. **[v2.0] Add External Calendar Service Integrations** - `external-integrations.md`
-5. **[v2.0] Implement Family-Specific AI Features** - `family-specific-features.md`
+3. **[v1.1] Implement Google Auth Integration** - `google-auth-integration.md`
+4. **[v2.0] Implement Predictive Scheduling with Machine Learning** - `predictive-scheduling.md`
+5. **[v2.0] Add External Calendar Service Integrations** - `external-integrations.md`
+6. **[v2.0] Implement Family-Specific AI Features** - `family-specific-features.md`
 
 ### Medium Priority
 6. **[v1.1] Add Voice Input Support to AI Agent** - `voice-input.md`

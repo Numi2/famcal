@@ -34,8 +34,11 @@ import AuthModal from "@/components/auth/auth-modal"
 import InteractiveCalendar from "@/components/calendar/interactive-calendar"
 import EventForm from "@/components/calendar/event-form"
 import FamilyCalendarAssistant from "@/components/ai-assistant/chat-ui"
+import { FamilySetup } from "@/components/onboarding/family-setup"
+import { LoadingState } from "@/components/onboarding/loading-state"
 import { useAuth } from "@/lib/auth/auth-context"
 import { useFamilyId } from "@/lib/hooks/use-family-id"
+import { useFamilyData } from "@/lib/hooks/use-family-data"
 import type { CalendarEvent } from "@/lib/calendar/types"
 
 export default function FamilyCalendarHome() {
@@ -67,6 +70,8 @@ export default function FamilyCalendarHome() {
   // Add auth hook
   const { user, loading: authLoading } = useAuth()
   const { familyId, loading: familyLoading } = useFamilyId()
+  const { familyMembers: userFamilyMembers, familyEvents: userFamilyEvents, mealPlans: userMealPlans, choreAssignments: userChoreAssignments, loading: familyDataLoading, error: familyDataError } = useFamilyData()
+  const [showOnboarding, setShowOnboarding] = useState(false)
 
   useEffect(() => {
     setIsLoaded(true)
@@ -79,21 +84,63 @@ export default function FamilyCalendarHome() {
     checkMobile()
     window.addEventListener("resize", checkMobile)
 
-    // Load family data
-    const members = FamilyCalendarPresenter.formatFamilyMembers(FamilyCalendarController.getFamilyMembers())
-    const events = FamilyCalendarPresenter.getFormattedFamilyEventsByDay(2) // Monday
-    const insights = FamilyCalendarPresenter.getFormattedFamilyInsights()
-    const meals = FamilyCalendarPresenter.formatMealPlans(FamilyCalendarController.getMealPlansByDay(2))
-    const chores = FamilyCalendarPresenter.formatChoreAssignments(FamilyCalendarController.getPendingChores())
-
-    setFamilyMembers(members)
-    setFamilyEvents(events)
-    setFamilyInsights(insights)
-    setTodayMeals(meals)
-    setPendingChores(chores)
-
     return () => window.removeEventListener("resize", checkMobile)
   }, [])
+
+  // Check if authenticated user needs onboarding
+  useEffect(() => {
+    if (user && !familyId && !familyLoading) {
+      setShowOnboarding(true)
+    } else if (!user) {
+      setShowOnboarding(false)
+    }
+  }, [user, familyId, familyLoading])
+
+  // Load personalized data when available, or sample data for guests
+  useEffect(() => {
+    if (user && familyId && !familyDataLoading) {
+      // Use real user data if available, otherwise fall back to sample data
+      if (userFamilyMembers.length > 0) {
+        const members = FamilyCalendarPresenter.formatFamilyMembers(userFamilyMembers)
+        const events = FamilyCalendarPresenter.getFormattedFamilyEventsByDay(2) // Monday
+        const insights = FamilyCalendarPresenter.getFormattedFamilyInsights()
+        const meals = FamilyCalendarPresenter.formatMealPlans(userMealPlans)
+        const chores = FamilyCalendarPresenter.formatChoreAssignments(userChoreAssignments)
+
+        setFamilyMembers(members)
+        setFamilyEvents(events)
+        setFamilyInsights(insights)
+        setTodayMeals(meals)
+        setPendingChores(chores)
+      } else {
+        // Fall back to sample data for demonstration
+        const members = FamilyCalendarPresenter.formatFamilyMembers(FamilyCalendarController.getFamilyMembers())
+        const events = FamilyCalendarPresenter.getFormattedFamilyEventsByDay(2) // Monday
+        const insights = FamilyCalendarPresenter.getFormattedFamilyInsights()
+        const meals = FamilyCalendarPresenter.formatMealPlans(FamilyCalendarController.getMealPlansByDay(2))
+        const chores = FamilyCalendarPresenter.formatChoreAssignments(FamilyCalendarController.getPendingChores())
+
+        setFamilyMembers(members)
+        setFamilyEvents(events)
+        setFamilyInsights(insights)
+        setTodayMeals(meals)
+        setPendingChores(chores)
+      }
+    } else if (!user || (!familyId && !familyLoading)) {
+      // Load sample data for guest users or users without families
+      const members = FamilyCalendarPresenter.formatFamilyMembers(FamilyCalendarController.getFamilyMembers())
+      const events = FamilyCalendarPresenter.getFormattedFamilyEventsByDay(2) // Monday
+      const insights = FamilyCalendarPresenter.getFormattedFamilyInsights()
+      const meals = FamilyCalendarPresenter.formatMealPlans(FamilyCalendarController.getMealPlansByDay(2))
+      const chores = FamilyCalendarPresenter.formatChoreAssignments(FamilyCalendarController.getPendingChores())
+
+      setFamilyMembers(members)
+      setFamilyEvents(events)
+      setFamilyInsights(insights)
+      setTodayMeals(meals)
+      setPendingChores(chores)
+    }
+  }, [user, familyId, familyLoading, familyDataLoading, userFamilyMembers, userFamilyEvents, userMealPlans, userChoreAssignments])
 
   const handleEventClick = (event: any) => {
     // Normalize the event data to handle both calendar events and family events
@@ -124,14 +171,10 @@ export default function FamilyCalendarHome() {
   }
 
   const handleAddEvent = (date: Date, timeSlot?: string) => {
-    if (user) {
-      setSelectedDateForEvent(date)
-      setSelectedTimeForEvent(timeSlot || null)
-      setSelectedEventForEdit(null)
-      setShowEventForm(true)
-    } else {
-      setShowAuthModal(true)
-    }
+    setSelectedDateForEvent(date)
+    setSelectedTimeForEvent(timeSlot || null)
+    setSelectedEventForEdit(null)
+    setShowEventForm(true)
   }
 
   const handleEventFormSubmit = (eventData: Omit<CalendarEvent, "id">) => {
@@ -265,16 +308,10 @@ export default function FamilyCalendarHome() {
       <div className="mb-4 md:mb-6 flex-shrink-0">
         <button
           onClick={() => {
-            if (user) {
-              // User is authenticated, show add event form
-              setSelectedEventForEdit(null)
-              setSelectedDateForEvent(null)
-              setSelectedTimeForEvent(null)
-              setShowEventForm(true)
-            } else {
-              // User not authenticated, show auth modal
-              setShowAuthModal(true)
-            }
+            setSelectedEventForEdit(null)
+            setSelectedDateForEvent(null)
+            setSelectedTimeForEvent(null)
+            setShowEventForm(true)
           }}
           className="mb-3 md:mb-4 flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 px-3 md:px-4 py-2 md:py-3 text-white w-full hover:from-pink-600 hover:to-purple-700 transition-all text-sm md:text-base touch-manipulation active:scale-95"
         >
@@ -485,6 +522,24 @@ export default function FamilyCalendarHome() {
     </div>
   )
 
+  // Show loading state while checking authentication and family status (only for authenticated users)
+  if (authLoading || (user && familyLoading)) {
+    return <LoadingState />
+  }
+
+  // Show onboarding if authenticated user needs to set up their family
+  if (user && showOnboarding) {
+    return (
+      <FamilySetup 
+        onComplete={() => {
+          setShowOnboarding(false)
+          // Refresh the page to load the new family data
+          window.location.reload()
+        }} 
+      />
+    )
+  }
+
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
       {/* Background Image */}
@@ -531,8 +586,11 @@ export default function FamilyCalendarHome() {
             />
           </div>
           <button
-            onClick={() => window.location.href = '/settings'}
-            className="p-2 hover:bg-white/20 rounded-full transition-colors"
+
+            onClick={() => setShowAuthModal(true)}
+            className="p-2 rounded-full hover:bg-white/20 transition-colors touch-manipulation active:scale-95"
+            title="Login / Register"
+
           >
             <Settings className="h-5 w-5 md:h-6 md:w-6 text-white drop-shadow-md" />
           </button>
