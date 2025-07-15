@@ -90,6 +90,7 @@ export function FamilySetup({ onComplete }: FamilySetupProps) {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include", // Include cookies with the request
         body: JSON.stringify({
           familyName: familyData.familyName,
           familyDescription: familyData.familyDescription,
