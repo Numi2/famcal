@@ -1,6 +1,6 @@
 -- Create new tables for Family Calendar (keeping existing tables intact)
 
--- Create families table
+-- Create families table first (since profiles references it)
 CREATE TABLE IF NOT EXISTS families (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
@@ -8,6 +8,26 @@ CREATE TABLE IF NOT EXISTS families (
   description TEXT,
   settings JSONB DEFAULT '{}',
   created_by UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL
+);
+
+-- Create profiles table that links users to families
+CREATE TABLE IF NOT EXISTS profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  full_name VARCHAR(255),
+  avatar_url TEXT,
+  family_id UUID REFERENCES families(id) ON DELETE SET NULL,
+  role VARCHAR(50) CHECK (role IN ('admin', 'parent', 'member')) DEFAULT 'member',
+  phone_number VARCHAR(20),
+  notification_preferences JSONB DEFAULT '{
+    "email": true,
+    "push": true,
+    "sms": false,
+    "reminder_minutes": [15, 60, 1440]
+  }'::jsonb,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  last_seen_at TIMESTAMP WITH TIME ZONE
 );
 
 -- Create family_members table (separate from existing profiles)
@@ -138,12 +158,20 @@ CREATE TABLE IF NOT EXISTS activity_suggestions (
 
 -- Enable Row Level Security on new tables
 ALTER TABLE families ENABLE ROW LEVEL SECURITY;
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE family_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE family_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE meal_plans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chore_assignments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE family_insights ENABLE ROW LEVEL SECURITY;
 ALTER TABLE activity_suggestions ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for profiles
+CREATE POLICY "Users can view and update their own profile" ON profiles
+  FOR ALL USING (id = auth.uid());
+
+CREATE POLICY "Users can insert their own profile" ON profiles
+  FOR INSERT WITH CHECK (id = auth.uid());
 
 -- Create policies for families
 CREATE POLICY "Users can view families they belong to" ON families
@@ -305,6 +333,9 @@ CREATE POLICY "Users can create activity suggestions" ON activity_suggestions
   );
 
 -- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_profiles_family_id ON profiles(family_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_email ON profiles(email);
+CREATE INDEX IF NOT EXISTS idx_profiles_updated_at ON profiles(updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_family_members_user_id ON family_members(user_id);
 CREATE INDEX IF NOT EXISTS idx_family_members_family_id ON family_members(family_id);
 CREATE INDEX IF NOT EXISTS idx_family_events_family_id ON family_events(family_id);
@@ -320,11 +351,28 @@ CREATE INDEX IF NOT EXISTS idx_family_insights_family_id ON family_insights(fami
 CREATE OR REPLACE FUNCTION public.handle_family_user_signup()
 RETURNS trigger AS $$
 BEGIN
-  -- This function can be used to create initial family setup if needed
-  -- For now, we'll let users create families manually
-  RETURN new;
+  -- Create a profile for the new user
+  INSERT INTO public.profiles (id, email, full_name, created_at, updated_at)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1)),
+    NOW(),
+    NOW()
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    email = EXCLUDED.email,
+    full_name = COALESCE(EXCLUDED.full_name, profiles.full_name),
+    updated_at = NOW();
+
+  RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger to create profile on user signup
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_family_user_signup();
 
 -- Insert some sample activity suggestions
 INSERT INTO activity_suggestions (title, description, duration, min_age, max_age, location, cost, educational, physical, creative, social, is_public) VALUES

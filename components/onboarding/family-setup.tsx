@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Users, Heart } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Plus, Users, Heart, AlertCircle } from 'lucide-react'
 
 interface FamilySetupProps {
   onComplete: () => void
@@ -17,6 +18,7 @@ interface FamilySetupProps {
 export function FamilySetup({ onComplete }: FamilySetupProps) {
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string>('')
   const [step, setStep] = useState(1)
   const [familyData, setFamilyData] = useState<OnboardingData>({
     familyName: '',
@@ -26,6 +28,7 @@ export function FamilySetup({ onComplete }: FamilySetupProps) {
 
   const handleFamilyNameSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    setError('')
     if (familyData.familyName.trim()) {
       setStep(2)
     }
@@ -63,6 +66,8 @@ export function FamilySetup({ onComplete }: FamilySetupProps) {
     if (!user) return
 
     setLoading(true)
+    setError('')
+    
     try {
       // Filter out empty members
       const validMembers = familyData.members.filter(member => member.full_name.trim())
@@ -89,14 +94,16 @@ export function FamilySetup({ onComplete }: FamilySetupProps) {
         })
       })
 
+      const data = await response.json()
+
       if (!response.ok) {
-        throw new Error('Failed to create family')
+        throw new Error(data.error || 'Failed to create family')
       }
 
       onComplete()
     } catch (error) {
       console.error('Error setting up family:', error)
-      // You could add error handling UI here
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -121,6 +128,12 @@ export function FamilySetup({ onComplete }: FamilySetupProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             <form onSubmit={handleFamilyNameSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="familyName">Family Name</Label>
@@ -164,6 +177,12 @@ export function FamilySetup({ onComplete }: FamilySetupProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-4">
               {familyData.members.map((member, index) => (
