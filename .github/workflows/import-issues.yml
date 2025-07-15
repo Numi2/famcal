@@ -1,0 +1,55 @@
+name: Import GitHub Issues and Milestones
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - '.github/**'
+  workflow_dispatch:
+
+jobs:
+  import-issues:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: latest
+        
+    - name: Install GitHub CLI
+      run: |
+        type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+        && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+        && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+        && sudo apt update \
+        && sudo apt install gh -y
+        
+    - name: Authenticate with GitHub
+      run: |
+        echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+        gh auth status
+        
+    - name: Import Issues and Milestones
+      run: |
+        chmod +x scripts/import-github-issues.sh
+        ./scripts/import-github-issues.sh
+        
+    - name: Create Summary
+      run: |
+        echo "## GitHub Issues Import Summary" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Issues and milestones have been imported to the repository" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Files processed:**" >> $GITHUB_STEP_SUMMARY
+        echo "- Milestones: \`.github/milestones/\`" >> $GITHUB_STEP_SUMMARY
+        echo "- Issues: \`.github/issues/\`" >> $GITHUB_STEP_SUMMARY
+        echo "- Templates: \`.github/ISSUE_TEMPLATE/\`" >> $GITHUB_STEP_SUMMARY 

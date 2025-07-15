@@ -1,0 +1,114 @@
+name: Bug Report
+description: Report a bug in the Family Calendar application
+title: "[Bug] "
+labels: ["bug"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! 🐛
+  
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is
+      placeholder: "The AI agent doesn't respond when I say..."
+    validations:
+      required: true
+  
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which part of the application is affected?
+      options:
+        - "AI Agent"
+        - "Calendar"
+        - "Authentication"
+        - "Family Dashboard"
+        - "Event Management"
+        - "UI/UX"
+        - "Database"
+        - "Other"
+    validations:
+      required: true
+  
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How severe is this bug?
+      options:
+        - "Low - Minor inconvenience"
+        - "Medium - Affects functionality"
+        - "High - Breaks core feature"
+        - "Critical - Application unusable"
+    validations:
+      required: true
+  
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this bug?
+      placeholder: |
+        1. Go to the AI assistant
+        2. Type "Schedule a meeting"
+        3. See error message
+    validations:
+      required: true
+  
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: What should happen instead?
+      placeholder: "The AI should schedule a meeting and confirm the details"
+    validations:
+      required: true
+  
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+      placeholder: "The AI shows an error and doesn't create the event"
+    validations:
+      required: true
+  
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      description: What browser are you using?
+      options:
+        - "Chrome"
+        - "Firefox"
+        - "Safari"
+        - "Edge"
+        - "Other"
+    validations:
+      required: false
+  
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device
+      description: What device are you using?
+      options:
+        - "Desktop"
+        - "Tablet"
+        - "Mobile"
+    validations:
+      required: false
+  
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other context about the problem
+      placeholder: "This happens when I'm logged in as a parent user..."
+    validations:
+      required: false 
