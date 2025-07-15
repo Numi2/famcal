@@ -31,7 +31,9 @@ import ChildrenOverview from "@/components/family-dashboard/children-overview"
 import AuthModal from "@/components/auth/auth-modal"
 import InteractiveCalendar from "@/components/calendar/interactive-calendar"
 import EventForm from "@/components/calendar/event-form"
+import FamilyCalendarAssistant from "@/components/ai-assistant/chat-ui"
 import { useAuth } from "@/lib/auth/auth-context"
+import { useFamilyId } from "@/lib/hooks/use-family-id"
 import type { CalendarEvent } from "@/lib/calendar/types"
 
 export default function FamilyCalendarHome() {
@@ -61,6 +63,7 @@ export default function FamilyCalendarHome() {
 
   // Add auth hook
   const { user, loading: authLoading } = useAuth()
+  const { familyId, loading: familyLoading } = useFamilyId()
 
   useEffect(() => {
     setIsLoaded(true)
@@ -716,6 +719,11 @@ export default function FamilyCalendarHome() {
       )}
       {/* Auth Modal */}
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} initialMode="signup" />
+      
+      {/* AI Assistant */}
+      {user && familyId && !familyLoading && (
+        <FamilyCalendarAssistant familyId={familyId} />
+      )}
     </div>
   )
 }

@@ -1,31 +1,125 @@
-ate a comprehensive AI.MD file that outlines all the tasks needed to implement an AI agent that can perform actions within your family calendar app.
-AI.MD
-+448
+Below is a practical catalogue of the tools your Calendar-AI agent should expose, plus design patterns, type signatures, and code snippets that plug straight into AI-SDK 5’s strongly-typed tool-calling system.  Treat it as a menu: start with the CRUD core, add availability tools when you need scheduling super-powers, and sprinkle in helper utilities if you want the model to handle fuzzy user phrasing.
+
+⸻
+
+Quick overview
+
+Purpose	Tool name	Minimum parameters (Zod)	Typical return
+Create / edit	createEvent, updateEvent	summary, startsAt, endsAt, optional rrule, tzid	the new/updated Event row
+Delete	cancelEvent	eventId	{ success: true }
+Fetch	getEvent, listEvents	eventId or { from, to }	one Event or an array
+Availability	findFreeSlot, freeBusy	{ durationMins, windowStart, windowEnd }	{ start, end } or list of busy ranges
+Natural-time helpers (optional)	parseNaturalTime, guessTimeZone	English phrase or IP address	ISO-8601 string / IANA TZ
+
+All of them follow AI-SDK 5’s “description / parameters / execute()” pattern, so the agent can call them in multi-step loops controlled by maxSteps. ￼ ￼
+
+⸻
+
+1  CRUD tools
+
+1.1  createEvent
+
+export const createEvent = tool({
+  description: 'Create a calendar event in the local DB',
+  parameters: z.object({
+    summary:   z.string(),
+    startsAt:  z.string().datetime(),  // ISO-8601 UTC
+    endsAt:    z.string().datetime(),
+    rrule:     z.string().optional(),  // RFC 5545
+    tzid:      z.string().optional()   // IANA zone for display
+  }),
+  async execute(args) {
+    const ruleId = args.rrule
+      ? (await db.rule.create({ data: { rrule: args.rrule, tzid: args.tzid } })).id
+      : undefined;
+    return db.event.create({ data: { ...args, ruleId } });
+  }
+});
+
+Store datetimes in UTC (TIMESTAMPTZ) and keep the user’s zone only for presentation—Postgres converts automatically on read. ￼ ￼
+Recurring events stay lean by persisting the raw RRULE string rather than every instance. ￼
 
 
 
- # AI Agent Implementation Guide for Family Calendar App  ## Overview This document outlines the comprehensive implementation plan for an AI agent that can understand user intent and perform actions within the family calendar application. The agent will enable users to interact with the calendar using natural language and automate complex scheduling tasks.  ## Table of Contents 1. [Architecture Overview](#architecture-overview) 2. [Core AI Features](#core-ai-features) 3. [Implementation Tasks](#implementation-tasks) 4. [Technical Requirements](#technical-requirements) 5. [Security & Privacy](#security--privacy) 6. [Testing Strategy](#testing-strategy) 7. [Deployment & Monitoring](#deployment--monitoring)  ## Architecture Overview  ### System Components ``` ┌─────────────────────────────────────────────────────────────┐ │                        Frontend                              │ ├─────────────────────────────────────────────────────────────┤ │  Chat Interface │ Voice Interface │ Action Confirmation UI  │ ├─────────────────────────────────────────────────────────────┤ │                    AI Agent Layer                            │ ├─────────────────────────────────────────────────────────────┤ │  Intent Recognition │ Action Planner │ Conflict Resolver    │ ├─────────────────────────────────────────────────────────────┤ │                    Integration Layer                         │ ├─────────────────────────────────────────────────────────────┤ │  Calendar API │ Family Data API │ External Services API     │ ├─────────────────────────────────────────────────────────────┤ │                     Data Layer                               │ ├─────────────────────────────────────────────────────────────┤ │  Supabase DB │ Vector Store │ Event History │ User Prefs    │ └─────────────────────────────────────────────────────────────┘ ```  ## Core AI Features  ### 1. Natural Language Understanding - Parse user commands in natural language - Support multiple languages - Handle ambiguous requests - Context-aware understanding  ### 2. Calendar Actions - Create, update, delete events - Manage recurring events - Handle event conflicts - Schedule optimization - Bulk operations  ### 3. Family Management - Individual member schedule tracking - Family member preferences - Age-appropriate activity suggestions - Chore and task assignment  ### 4. Intelligent Features - Proactive suggestions - Pattern recognition - Conflict prediction - Schedule optimization - Smart reminders  ## Implementation Tasks  ### Phase 1: Foundation (Week 1-2)  #### Task 1.1: Enhanced AI Service Architecture - [ ] Create `lib/ai/agent.ts` - Core AI agent class - [ ] Create `lib/ai/intents.ts` - Intent recognition system - [ ] Create `lib/ai/actions.ts` - Action execution framework - [ ] Create `lib/ai/context.ts` - Context management - [ ] Create `lib/ai/types.ts` - TypeScript types for AI system  **Acceptance Criteria:** - AI agent can receive and process requests - Basic intent recognition works - Action framework is extensible  #### Task 1.2: Tool Calling Infrastructure - [ ] Implement calendar tool definitions - [ ] Create family member tool definitions - [ ] Build event search and filter tools - [ ] Add preference management tools - [ ] Implement validation and error handling  **File: `lib/ai/tools/calendar-tools.ts`** ```typescript export const calendarTools = {   createEvent: {     description: "Create a new calendar event",     parameters: z.object({       title: z.string(),       startTime: z.string(),       endTime: z.string(),       participants: z.array(z.string()),       location: z.string().optional(),       description: z.string().optional(),       recurring: z.object({         frequency: z.enum(['daily', 'weekly', 'monthly']),         until: z.string().optional()       }).optional()     })   },   // Additional tools... } ```  #### Task 1.3: Enhanced Chat Interface - [ ] Upgrade `components/ai-assistant/chat-ui.tsx` - [ ] Add action confirmation dialogs - [ ] Implement voice input support - [ ] Add typing indicators and status updates - [ ] Create action preview components  **Acceptance Criteria:** - Users can see what actions the AI will take - Confirmation required for destructive actions - Voice input works on supported devices  ### Phase 2: Core Calendar Integration (Week 3-4)  #### Task 2.1: Calendar Action Implementation - [ ] Implement event CRUD operations via AI - [ ] Add support for recurring events - [ ] Build conflict detection and resolution - [ ] Create bulk operation handlers - [ ] Add timezone handling  **File: `lib/ai/actions/calendar-actions.ts`** ```typescript export class CalendarActions {   async createEvent(params: CreateEventParams): Promise<Event> {     // Validate permissions     // Check for conflicts     // Create event     // Update related family members     // Send notifications   } } ```  #### Task 2.2: Natural Language Processing - [ ] Implement date/time parsing - [ ] Add relative date understanding ("next Tuesday") - [ ] Handle duration parsing ("2 hours") - [ ] Support activity type recognition - [ ] Add location extraction  **Acceptance Criteria:** - Can parse "Schedule soccer practice next Tuesday at 4pm for 90 minutes" - Handles ambiguous dates correctly - Supports multiple date formats  #### Task 2.3: Conflict Resolution System - [ ] Build conflict detection algorithm - [ ] Create suggestion engine for alternatives - [ ] Implement priority-based resolution - [ ] Add family member availability checking - [ ] Build notification system for conflicts  ### Phase 3: Advanced Features (Week 5-6)  #### Task 3.1: Proactive AI Assistant - [ ] Implement pattern recognition for events - [ ] Build suggestion system based on history - [ ] Create reminder optimization - [ ] Add weather-based suggestions - [ ] Implement travel time calculations  **File: `lib/ai/proactive/suggestions.ts`** ```typescript export class ProactiveSuggestions {   async generateDailySuggestions(familyId: string) {     // Analyze patterns     // Check weather     // Review upcoming events     // Generate personalized suggestions   } } ```  #### Task 3.2: Family Member Intelligence - [ ] Build preference learning system - [ ] Add age-appropriate filtering - [ ] Implement schedule balancing - [ ] Create workload distribution - [ ] Add special needs support  #### Task 3.3: Multi-modal Interaction - [ ] Add voice command processing - [ ] Implement quick action buttons - [ ] Build gesture support for mobile - [ ] Create calendar drag-drop with AI - [ ] Add image-based event creation  ### Phase 4: External Integrations (Week 7-8)  #### Task 4.1: Third-party Calendar Sync - [ ] Google Calendar integration - [ ] Apple Calendar integration - [ ] Outlook Calendar integration - [ ] School calendar imports - [ ] Sports team schedule sync  #### Task 4.2: Smart Home Integration - [ ] Alexa skill development - [ ] Google Assistant action - [ ] Home automation triggers - [ ] Smart display widgets - [ ] Voice announcement system  #### Task 4.3: External Data Sources - [ ] Weather API integration - [ ] Traffic/transit APIs - [ ] School district APIs - [ ] Local event databases - [ ] Restaurant/activity APIs  ### Phase 5: Advanced AI Capabilities (Week 9-10)  #### Task 5.1: Complex Query Understanding - [ ] Multi-step command parsing - [ ] Conditional logic handling - [ ] Bulk operation understanding - [ ] Complex date range queries - [ ] Natural language filters  **Example Queries:** - "Schedule piano lessons every Tuesday and Thursday at 4pm for Sarah, but skip any days we have soccer" - "Find a 2-hour slot next week when all family members are free for a movie night" - "Move all of John's activities next week one hour later"  #### Task 5.2: Learning and Adaptation - [ ] Implement user feedback loop - [ ] Build preference learning - [ ] Add behavior pattern recognition - [ ] Create personalization engine - [ ] Implement A/B testing framework  #### Task 5.3: Advanced Planning Features - [ ] Multi-constraint optimization - [ ] Route planning for multiple events - [ ] Resource allocation (car, babysitter) - [ ] Budget tracking integration - [ ] Meal planning coordination  ### Phase 6: Production Readiness (Week 11-12)  #### Task 6.1: Performance Optimization - [ ] Implement request caching - [ ] Add response streaming - [ ] Optimize database queries - [ ] Build CDN integration - [ ] Add request batching  #### Task 6.2: Security Implementation - [ ] Add rate limiting - [ ] Implement input sanitization - [ ] Build permission system - [ ] Add audit logging - [ ] Implement data encryption  #### Task 6.3: Error Handling & Recovery - [ ] Build comprehensive error handling - [ ] Add fallback mechanisms - [ ] Implement retry logic - [ ] Create error reporting - [ ] Add graceful degradation  ## Technical Requirements  ### AI Model Configuration ```typescript // lib/ai/config.ts export const AI_CONFIG = {   model: "gpt-4-turbo-preview",   temperature: 0.7,   maxTokens: 2000,   tools: ["calendar", "family", "suggestions"],   streaming: true,   functionCalling: true } ```  ### Database Schema Extensions ```sql -- AI interactions table CREATE TABLE ai_interactions (   id UUID PRIMARY KEY,   user_id UUID REFERENCES users(id),   input TEXT NOT NULL,   intent JSONB,   actions JSONB,   result JSONB,   feedback INTEGER,   created_at TIMESTAMP DEFAULT NOW() );  -- User preferences for AI CREATE TABLE ai_preferences (   user_id UUID PRIMARY KEY REFERENCES users(id),   language VARCHAR(10) DEFAULT 'en',   voice_enabled BOOLEAN DEFAULT false,   confirmation_required BOOLEAN DEFAULT true,   proactive_suggestions BOOLEAN DEFAULT true,   learning_enabled BOOLEAN DEFAULT true ); ```  ### API Endpoints ```typescript // app/api/ai/route.ts POST   /api/ai/chat          - Process chat messages POST   /api/ai/voice         - Process voice commands   POST   /api/ai/action        - Execute AI actions GET    /api/ai/suggestions   - Get proactive suggestions POST   /api/ai/feedback      - Submit user feedback ```  ## Security & Privacy  ### Data Protection 1. **Encryption**: All AI interactions encrypted at rest 2. **Access Control**: Role-based permissions for AI actions 3. **Data Retention**: Configurable retention policies 4. **Audit Trail**: Complete logging of all AI actions 5. **GDPR Compliance**: Right to deletion, data portability  ### Privacy Features - [ ] Implement data anonymization - [ ] Add privacy mode toggle - [ ] Build consent management - [ ] Create data export functionality - [ ] Add incognito mode for sensitive events  ## Testing Strategy  ### Unit Tests ```typescript // lib/ai/__tests__/intent-recognition.test.ts describe('Intent Recognition', () => {   it('should recognize event creation intent', () => {     const input = "Schedule dinner with grandparents on Sunday at 6pm"     const intent = recognizeIntent(input)     expect(intent.type).toBe('CREATE_EVENT')     expect(intent.parameters.title).toBe('dinner with grandparents')   }) }) ```  ### Integration Tests - [ ] Test AI with real calendar operations - [ ] Verify conflict resolution - [ ] Test multi-user scenarios - [ ] Validate permission system - [ ] Test external integrations  ### E2E Tests - [ ] Complete user journey tests - [ ] Voice command workflows - [ ] Multi-device scenarios - [ ] Performance under load - [ ] Error recovery scenarios  ## Deployment & Monitoring  ### Deployment Checklist - [ ] Environment variables configured - [ ] Rate limits set appropriately - [ ] Monitoring dashboards created - [ ] Alerting rules configured - [ ] Backup procedures tested - [ ] Rollback plan documented  ### Monitoring Metrics 1. **Performance Metrics**    - Response time percentiles    - Token usage and costs    - Cache hit rates    - Error rates by type  2. **User Metrics**    - Daily active AI users    - Actions per user    - Success rate of actions    - User satisfaction scores  3. **System Metrics**    - API availability    - Database performance    - Queue lengths    - Memory usage  ### Cost Management ```typescript // lib/ai/cost-tracker.ts export class AIUsageTracker {   async trackUsage(userId: string, tokens: number, model: string) {     // Track token usage     // Monitor costs     // Alert on threshold     // Implement quotas   } } ```  ## Success Metrics  ### Key Performance Indicators 1. **Adoption Rate**: 80% of users using AI features monthly 2. **Success Rate**: 95% of AI actions completed successfully   3. **Time Saved**: Average 30 minutes saved per family per week 4. **User Satisfaction**: 4.5+ star rating for AI features 5. **Error Rate**: Less than 1% error rate in production  ### User Feedback Loop - [ ] In-app feedback collection - [ ] Monthly user surveys - [ ] Feature request tracking - [ ] Bug report integration - [ ] A/B testing framework  ## Next Steps  1. **Immediate Actions**:    - Set up development environment    - Configure AI API keys    - Create test family accounts    - Begin Phase 1 implementation  2. **Team Requirements**:    - Frontend developer for UI    - Backend developer for integrations    - AI/ML engineer for model optimization    - QA engineer for testing    - DevOps for deployment  3. **Timeline**:    - Total implementation: 12 weeks    - MVP ready: Week 6    - Beta testing: Week 10    - Production launch: Week 12  ## Conclusion  This AI agent implementation will transform the family calendar app into an intelligent assistant that understands natural language, automates scheduling tasks, and helps families manage their busy lives more effectively. The phased approach ensures we can deliver value incrementally while building towards a comprehensive solution.
+⸻
 
-Thought for 2s
-Great! I've created the AI.MD file. Now let me also create a quick start implementation guide to help get the development started immediately. I'll create some example code files that can be used as a starting point for the AI agent implementation.
-Now let me create some example implementation files to help kickstart the development:
+2  Query tools
 
-app/api/ai/chat/route.ts
+2.1  getEvent
 
+Returns a single expanded occurrence (respecting overrides) so the model can answer questions like “When exactly is my dentist appointment?”
+It’s essentially a SELECT … WHERE id = $1.
 
+2.2  listEvents
 
-Changes are not committed yet
-lib/ai/actions/calendar-actions.ts
+parameters: z.object({
+  from: z.string().datetime(),
+  to:   z.string().datetime()
+})
 
+Expand RRULEs inside [from, to] with rrule.js and merge in single-shot events and exceptions. ￼ ￼
 
-lib/ai/agent.ts
+⸻
 
+3  Availability tools
 
-lib/ai/tools/calendar-tools.ts
+3.1  freeBusy
 
+parameters: z.object({
+  windowStart: z.string().datetime(),
+  windowEnd:   z.string().datetime()
+})
 
-lib/ai/types.ts
+Use a tstzrange GiST index and Postgres’s overlap operator && for an efficient query:
 
+SELECT during FROM "Event"
+WHERE during && tstzrange($1::timestamptz, $2::timestamptz);
 
+This yields every busy slot in one pass. ￼ ￼
 
-Changes are not committed yet
+3.2  findFreeSlot
+
+parameters: z.object({
+  durationMins: z.number().int().positive(),
+  windowStart:  z.string().datetime(),
+  windowEnd:    z.string().datetime()
+})
+
+Internally calls freeBusy, subtracts busy ranges from the window, and returns the first gap ≥ durationMins.  The agent often uses this in a two-step loop: call the tool, then confirm with the user.  maxSteps ensures it never spirals. ￼ ￼
+
+⸻
+
+4  Helper tools (nice-to-haves)
+	•	parseNaturalTime – leverage the model less: parse “next Friday after lunch” to an ISO string server-side.
+	•	guessTimeZone – map IP or locale to an IANA TZ with a GeoIP service.
+	•	convertToUserZone – small wrapper that transforms UTC → user TZ with the Temporal polyfill (Temporal.ZonedDateTime). ￼
+
+Because they hide tricky date math, the LLM spends fewer tokens reasoning and fewer calls fail validation.
+
+⸻
+
+5  Testing & validation
+	•	Schema validation – Zod catches bad args before they hit the DB. ￼
+	•	Unit tests – Feed fixed prompts into generateText() (single-step) to assert the correct tool JSON.
+	•	Integration tests – Spin up a test Postgres, seed fixtures, stream chat via streamText(), and verify side-effects.  AI-SDK exposes deterministic options so snapshots stay stable. ￼
+
+⸻
+
+6  Putting it all together in AI-SDK 5
+
+import * as tools from '@/tools/calendar-db';
+
+const result = await streamText({
+  model: openai('gpt-4o'),
+  messages: convertToModelMessages(uiMessages),
+  tools,          // 🌟 every tool described above
+  maxSteps: 5     // agent can chain calls & confirmations
+});
+
+Each tool becomes a tool-{name} part in the message stream; AI-SDK validates parameters, executes your code, injects the result, and lets the model decide what to do next—ask follow-ups, try another tool, or finish. ￼ ￼
+
+⸻
+
+Bottom line
+
+Define a clean, purpose-built tool set—CRUD + availability + helpers—wrap every call in Zod, back it with your Postgres event store, and AI-SDK 5 will orchestrate multi-step reasoning for you.  The agent’s logic stays tiny while your database and tools do the heavy lifting.  Happy building, Numan!

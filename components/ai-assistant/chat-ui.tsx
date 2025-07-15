@@ -4,19 +4,22 @@ import { useState, useRef, useEffect } from "react"
 import { Heart, Send, X, Loader2, ChevronUp, ChevronDown, Sparkles } from "lucide-react"
 import { useChat } from "ai/react"
 
-export default function FamilyCalendarAssistant() {
+export default function FamilyCalendarAssistant({ familyId }: { familyId: string }) {
   const [isOpen, setIsOpen] = useState(false)
   const [isExpanded, setIsExpanded] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: "/api/chat",
+    api: "/api/agent",
+    body: {
+      familyId,
+    },
     initialMessages: [
       {
         id: "welcome",
         role: "assistant",
         content:
-          "Hi there! I'm your family calendar assistant! 👨‍👩‍👧‍👦 I'm here to help make your family life easier and more organized. I can help with scheduling, meal planning, activity suggestions, chores, and so much more. What would you like to know about your family's schedule today?",
+          "Hi there! I'm your family calendar assistant! 👨‍👩‍👧‍👦 I'm here to help make your family life easier and more organized. I can help with scheduling events, finding free time slots, managing your family calendar, and so much more. What would you like to know about your family's schedule today?",
       },
     ],
   })
@@ -36,12 +39,12 @@ export default function FamilyCalendarAssistant() {
     setIsExpanded(!isExpanded)
   }
 
-  // Quick action buttons for common family tasks
+  // Quick action buttons for common calendar tasks
   const quickActions = [
-    { label: "Today's Schedule", action: "What's on our family schedule for today?" },
-    { label: "Meal Ideas", action: "Can you suggest some kid-friendly meals for this week?" },
-    { label: "Activity Ideas", action: "What are some fun activities we can do with the kids today?" },
-    { label: "Chore Check", action: "How are the kids doing with their chores?" },
+    { label: "Today's Events", action: "What events do we have scheduled for today?" },
+    { label: "Find Free Time", action: "Can you find a 2-hour free slot this week for a family activity?" },
+    { label: "Schedule Event", action: "Help me schedule a dentist appointment for next week" },
+    { label: "Week Overview", action: "Show me all our events for this week" },
   ]
 
   const handleQuickAction = (action: string) => {
@@ -158,7 +161,7 @@ export default function FamilyCalendarAssistant() {
               </button>
             </div>
             <p className="text-xs text-gray-500 mt-2 text-center">
-              💡 Try asking: "What's for dinner?" or "Any conflicts in our schedule?"
+              💡 Try asking: "Schedule a meeting for tomorrow at 2pm" or "Find free time this week"
             </p>
           </form>
         </div>
