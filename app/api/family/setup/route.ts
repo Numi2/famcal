@@ -4,6 +4,8 @@ import { UserOnboardingService } from "@/lib/services/user-onboarding"
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("[SERVER] Processing family setup request")
+    
     const supabase = await createClient()
 
     // Get the current user
@@ -12,10 +14,17 @@ export async function POST(request: NextRequest) {
       error: authError,
     } = await supabase.auth.getUser()
 
-    if (authError || !user) {
-      console.error("Auth error:", authError?.message || "No user found in session")
+    if (authError) {
+      console.error("[SERVER] Auth error:", authError.message)
       return NextResponse.json({ error: "Authentication failed" }, { status: 401 })
     }
+    
+    if (!user) {
+      console.error("[SERVER] No user found in session")
+      return NextResponse.json({ error: "Authentication failed" }, { status: 401 })
+    }
+
+    console.log("[SERVER] User authenticated:", user.id)
 
     const body = await request.json()
     const { familyName, familyDescription, members } = body
@@ -44,7 +53,7 @@ export async function POST(request: NextRequest) {
       message: "Family created successfully",
     })
   } catch (error) {
-    console.error("Error setting up family:", error)
+    console.error("[SERVER] Error setting up family:", error)
     const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred."
     return NextResponse.json({ error: `Failed to create family: ${errorMessage}` }, { status: 500 })
   }
