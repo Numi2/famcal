@@ -171,10 +171,14 @@ export default function FamilyCalendarHome() {
   }
 
   const handleAddEvent = (date: Date, timeSlot?: string) => {
-    setSelectedDateForEvent(date)
-    setSelectedTimeForEvent(timeSlot || null)
-    setSelectedEventForEdit(null)
-    setShowEventForm(true)
+    if (user) {
+      setSelectedDateForEvent(date)
+      setSelectedTimeForEvent(timeSlot || null)
+      setSelectedEventForEdit(null)
+      setShowEventForm(true)
+    } else {
+      setShowAuthModal(true)
+    }
   }
 
   const handleEventFormSubmit = (eventData: Omit<CalendarEvent, "id">) => {
@@ -204,22 +208,30 @@ export default function FamilyCalendarHome() {
   }
 
   const handleEditEvent = (event: CalendarEvent) => {
-    setSelectedEventForEdit(event)
-    setSelectedDateForEvent(null)
-    setSelectedTimeForEvent(null)
-    setShowEventForm(true)
+    if (user) {
+      setSelectedEventForEdit(event)
+      setSelectedDateForEvent(null)
+      setSelectedTimeForEvent(null)
+      setShowEventForm(true)
+    } else {
+      setShowAuthModal(true)
+    }
   }
 
   const handleDeleteEvent = (event: CalendarEvent) => {
-    const result = CalendarController.deleteEvent(event.id)
-    if (result.success) {
-      console.log("Event deleted successfully")
-      // Refresh events with timezone consideration
-      const events = CalendarController.getEventsForDisplay(timezone)
-      setFamilyEvents(events)
-      setSelectedEvent(null)
+    if (user) {
+      const result = CalendarController.deleteEvent(event.id)
+      if (result.success) {
+        console.log("Event deleted successfully")
+        // Refresh events with timezone consideration
+        const events = CalendarController.getEventsForDisplay(timezone)
+        setFamilyEvents(events)
+        setSelectedEvent(null)
+      } else {
+        console.error("Failed to delete event:", result.message)
+      }
     } else {
-      console.error("Failed to delete event:", result.message)
+      setShowAuthModal(true)
     }
   }
 
@@ -308,15 +320,19 @@ export default function FamilyCalendarHome() {
       <div className="mb-4 md:mb-6 flex-shrink-0">
         <button
           onClick={() => {
-            setSelectedEventForEdit(null)
-            setSelectedDateForEvent(null)
-            setSelectedTimeForEvent(null)
-            setShowEventForm(true)
+            if (user) {
+              setSelectedEventForEdit(null)
+              setSelectedDateForEvent(null)
+              setSelectedTimeForEvent(null)
+              setShowEventForm(true)
+            } else {
+              setShowAuthModal(true)
+            }
           }}
           className="mb-3 md:mb-4 flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 px-3 md:px-4 py-2 md:py-3 text-white w-full hover:from-pink-600 hover:to-purple-700 transition-all text-sm md:text-base touch-manipulation active:scale-95"
         >
           <Plus className="h-4 w-4 md:h-5 md:w-5" />
-          <span>Add Event</span>
+          <span>{user ? "Add Event" : "Sign In to Add Event"}</span>
         </button>
 
         {/* Tab Navigation */}
@@ -551,6 +567,22 @@ export default function FamilyCalendarHome() {
         priority
       />
 
+      {/* Guest Mode Banner */}
+      {!user && (
+        <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-10 bg-white/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-md">
+          <p className="text-sm text-gray-700 text-center">
+            <span className="font-medium">Browsing as Guest</span> - 
+            <button 
+              onClick={() => setShowAuthModal(true)}
+              className="text-purple-600 hover:text-purple-800 ml-1 underline"
+            >
+              Sign in
+            </button>
+            {" "}for full features
+          </p>
+        </div>
+      )}
+
       {/* Navigation */}
       <header
         className={`absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 md:px-8 py-4 md:py-6 opacity-0 ${isLoaded ? "animate-fade-in" : ""}`}
@@ -585,15 +617,27 @@ export default function FamilyCalendarHome() {
               className="rounded-full bg-white/10 backdrop-blur-sm pl-10 pr-4 py-2 text-white placeholder:text-white/70 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 w-32 lg:w-auto"
             />
           </div>
-          <button
-
-            onClick={() => setShowAuthModal(true)}
-            className="p-2 rounded-full hover:bg-white/20 transition-colors touch-manipulation active:scale-95"
-            title="Login / Register"
-
-          >
-            <Settings className="h-5 w-5 md:h-6 md:w-6 text-white drop-shadow-md" />
-          </button>
+          {user ? (
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="p-2 rounded-full hover:bg-white/20 transition-colors touch-manipulation active:scale-95"
+              title="Settings"
+            >
+              <Settings className="h-5 w-5 md:h-6 md:w-6 text-white drop-shadow-md" />
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="px-3 py-1 md:px-4 md:py-2 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors text-sm md:text-base touch-manipulation active:scale-95"
+              >
+                Sign In
+              </button>
+              <div className="hidden sm:flex items-center gap-1 bg-white/10 backdrop-blur-sm rounded-full px-2 py-1">
+                <span className="text-xs text-white/70">Guest Mode</span>
+              </div>
+            </div>
+          )}
           <div className="flex items-center gap-1">
             {parents.slice(0, 2).map((parent, i) => (
               <div
@@ -776,7 +820,7 @@ export default function FamilyCalendarHome() {
                 }}
                 className="flex-1 bg-purple-500 text-white py-3 px-4 rounded-lg hover:bg-purple-600 transition-colors text-sm md:text-base touch-manipulation active:scale-95"
               >
-                Edit Event
+                {user ? "Edit Event" : "Sign In to Edit"}
               </button>
               <button 
                 onClick={() => {
@@ -784,14 +828,14 @@ export default function FamilyCalendarHome() {
                 }}
                 className="px-4 py-3 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm md:text-base touch-manipulation active:scale-95"
               >
-                Delete
+                {user ? "Delete" : "Sign In to Delete"}
               </button>
             </div>
           </div>
         </div>
       )}
       {/* Auth Modal */}
-      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} initialMode="signup" />
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} initialMode="signin" />
       
       {/* AI Assistant */}
       {user && familyId && !familyLoading && (
