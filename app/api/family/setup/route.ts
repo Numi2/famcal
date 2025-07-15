@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { cookies } from "next/headers"
 import { createClient } from "@/lib/supabase/server"
 import { UserOnboardingService } from "@/lib/services/user-onboarding"
 

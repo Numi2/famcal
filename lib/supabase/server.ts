@@ -1,40 +1,30 @@
-import { createServerClient, type CookieOptions } from "@supabase/ssr"
-import { cookies } from "next/headers"
-import type { Database } from "./types"
 
-export async function createClient() {
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { cookies } from "next/headers";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+export const createClient = async () => {
   const cookieStore = await cookies()
-
-  return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  return createServerClient(
+    supabaseUrl!,
+    supabaseKey!,
     {
       cookies: {
-        get(name: string) {
-          const cookie = cookieStore.get(name)
-          return cookie?.value
+        getAll() {
+          return cookieStore.getAll()
         },
-        set(name: string, value: string, options: CookieOptions) {
+        setAll(cookiesToSet) {
           try {
-            cookieStore.set({ name, value, ...options })
-          } catch (error) {
-            // The `set` method was called from a Server Component.
+            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
+          } catch {
+            // The `setAll` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
             // user sessions.
-            console.warn(`Unable to set cookie ${name} in Server Component:`, error)
-          }
-        },
-        remove(name: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value: "", ...options })
-          } catch (error) {
-            // The `delete` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
-            console.warn(`Unable to remove cookie ${name} in Server Component:`, error)
           }
         },
       },
     },
-  )
-}
+  );
+};

@@ -94,7 +94,7 @@ export default function InteractiveCalendar({
         
         // Load family events
         const familyEventsData = FamilyCalendarController.getAllFamilyEvents()
-        setFamilyEvents(familyEventsData)
+        setFamilyEvents(familyEventsData as any)
       } catch (error) {
         console.error("Error loading events:", error)
       }
@@ -172,16 +172,16 @@ export default function InteractiveCalendar({
       attendees: event.attendees || [],
       organizer: event.organizer || '',
       color: event.color || 'bg-blue-500',
-      type: event.type || 'event',
-      typeIcon: event.typeIcon || '📅',
+      type: (event as any).type || 'event',
+      typeIcon: (event as any).typeIcon || '📅',
       priority: event.priority || null,
-      priorityColor: event.priorityColor || 'bg-gray-100 text-gray-800',
-      formattedTime: event.formattedTime || `${event.startTime || '00:00'} - ${event.endTime || '01:00'}`,
-      assignedMemberNames: event.assignedMemberNames || event.attendees || []
+      priorityColor: (event as any).priorityColor || 'bg-gray-100 text-gray-800',
+      formattedTime: (event as any).formattedTime || `${event.startTime || '00:00'} - ${event.endTime || '01:00'}`,
+      assignedMemberNames: (event as any).assignedMemberNames || event.attendees || []
     }
-    setSelectedEvent(normalizedEvent)
+    setSelectedEvent(normalizedEvent as any)
     setShowEventModal(true)
-    onEventClick?.(normalizedEvent)
+    onEventClick?.(normalizedEvent as any)
   }
 
   // Format date for display
@@ -189,7 +189,7 @@ export default function InteractiveCalendar({
     return date.toLocaleDateString('en-US', { 
       month: 'short', 
       day: 'numeric' 
-    })
+    })    
   }
 
   // Check if date is today
@@ -630,7 +630,7 @@ function EventDetailModal({
                       <div className="flex items-center gap-3">
               <Clock className="h-5 w-5 text-gray-500 flex-shrink-0" />
               <span className="text-gray-700">
-                {event.formattedTime || `${event.startTime} - ${event.endTime}`}
+                {(event as any).formattedTime || `${event.startTime} - ${event.endTime}`}
               </span>
             </div>
 
@@ -641,11 +641,11 @@ function EventDetailModal({
             </div>
           )}
 
-          {(event.attendees && event.attendees.length > 0) || (event.assignedMemberNames && event.assignedMemberNames.length > 0) ? (
+          {(event.attendees && event.attendees.length > 0) || ((event as any).assignedMemberNames && (event as any).assignedMemberNames.length > 0) ? (
             <div className="flex items-center gap-3">
               <Users className="h-5 w-5 text-gray-500 flex-shrink-0" />
               <div className="flex flex-wrap gap-1">
-                {(event.attendees || event.assignedMemberNames || []).map((attendee: string, i: number) => (
+                {(event.attendees || (event as any).assignedMemberNames || []).map((attendee: string, i: number) => (
                   <span key={i} className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs">
                     {attendee}
                   </span>
