@@ -1,65 +1,51 @@
-name: AI Agent Enhancement
-description: Suggest improvements or report issues with the AI calendar assistant
-title: "[AI Agent] "
-labels: ["ai-agent", "enhancement"]
+name: Idea or Suggestion
+description: Have an idea to make the Family Calendar better?
+title: "[Idea] "
+labels: ["enhancement"]
 assignees: []
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to help improve our AI calendar assistant! 🗓️🤖
+        Thanks for sharing your ideas! 🌟 We love hearing how we can make things better.
   
   - type: textarea
-    id: description
+    id: idea
     attributes:
-      label: Description
-      description: Describe the enhancement or issue you'd like to see
-      placeholder: "I'd like the AI agent to..."
+      label: What's your idea?
+      description: Tell us what you'd like to see improved or added
+      placeholder: "I wish the calendar could..."
+    validations:
+      required: true
+  
+  - type: textarea
+    id: why
+    attributes:
+      label: Why would this be helpful?
+      description: How would this make your family's life easier?
+      placeholder: "This would help because..."
     validations:
       required: true
   
   - type: dropdown
     id: type
     attributes:
-      label: Type
-      description: What type of enhancement is this?
+      label: What type of improvement?
+      description: What kind of change is this?
       options:
-        - "New Feature"
-        - "Bug Fix"
-        - "Performance Improvement"
-        - "User Experience"
-        - "Integration"
+        - "New feature"
+        - "Make something easier to use"
+        - "Fix something that's confusing"
+        - "Make it work better"
         - "Other"
     validations:
       required: true
   
-  - type: dropdown
-    id: priority
-    attributes:
-      label: Priority
-      description: How important is this enhancement?
-      options:
-        - "Low"
-        - "Medium"
-        - "High"
-        - "Critical"
-    validations:
-      required: true
-  
   - type: textarea
-    id: use-case
+    id: example
     attributes:
-      label: Use Case
-      description: Describe a specific scenario where this would be useful
-      placeholder: "When a user says 'Schedule a meeting with John tomorrow at 3pm'..."
-    validations:
-      required: false
-  
-  - type: textarea
-    id: acceptance-criteria
-    attributes:
-      label: Acceptance Criteria
-      description: What would success look like for this enhancement?
-      placeholder: "- User can say 'X' and the agent responds with 'Y'"
+      label: Can you give an example?
+      description: Show us how you'd use this feature
+      placeholder: "For example, when I say '...' the AI could..."
     validations:
       required: false 
