@@ -5,212 +5,137 @@ This document outlines the tasks needed to enhance the Family Calendar applicati
 
 ## 🚀 High Priority Tasks
 
-### Security & Authentication
-- [ ] **Implement proper authentication flow**
-  - Set up Supabase Auth with email/password
-  - Add OAuth providers (Google, Apple)
-  - Implement password reset functionality
-  - Add email verification process
 
-- [ ] **Security hardening**
-  - Enable Row Level Security (RLS) in Supabase
-  - Implement proper API route protection
-  - Add rate limiting to API endpoints
-  - Configure CORS properly
-  - Add input validation and sanitization
+Below is a practical catalogue of the tools your Calendar-AI agent should expose, plus design patterns, type signatures, and code snippets that plug straight into AI-SDK 5’s strongly-typed tool-calling system.  Treat it as a menu: start with the CRUD core, add availability tools when you need scheduling super-powers, and sprinkle in helper utilities if you want the model to handle fuzzy user phrasing.
 
-- [ ] **Environment configuration**
-  - Set up production environment variables
-  - Configure Supabase production instance
-  - Set up proper database connection pooling
-  - Configure Redis for session management
+⸻
 
-### Database & Data Management
-- [ ] **Database optimization**
-  - Create proper database indexes
-  - Implement database migrations
-  - Set up automated backups
-  - Configure read replicas for scaling
+Quick overview
 
-- [ ] **Data validation**
-  - Add comprehensive Zod schemas for all forms
-  - Implement server-side validation
-  - Add data integrity checks
-  - Set up audit logging
+Purpose	Tool name	Minimum parameters (Zod)	Typical return
+Create / edit	createEvent, updateEvent	summary, startsAt, endsAt, optional rrule, tzid	the new/updated Event row
+Delete	cancelEvent	eventId	{ success: true }
+Fetch	getEvent, listEvents	eventId or { from, to }	one Event or an array
+Availability	findFreeSlot, freeBusy	{ durationMins, windowStart, windowEnd }	{ start, end } or list of busy ranges
+Natural-time helpers (optional)	parseNaturalTime, guessTimeZone	English phrase or IP address	ISO-8601 string / IANA TZ
 
-### Performance & Optimization
-- [ ] **Frontend optimization**
-  - Implement lazy loading for components
-  - Add image optimization with Next.js Image
-  - Configure bundle splitting
-  - Implement service worker for offline capability
+All of them follow AI-SDK 5’s “description / parameters / execute()” pattern, so the agent can call them in multi-step loops controlled by maxSteps. ￼ ￼
 
-- [ ] **Caching strategy**
-  - Set up Redis caching for frequently accessed data
-  - Implement API response caching
-  - Configure CDN for static assets
-  - Add browser caching headers
+⸻
 
-## 🛠️ Medium Priority Tasks
+1  CRUD tools
 
-### User Experience
-- [ ] **Mobile responsiveness**
-  - Optimize layouts for mobile devices
-  - Implement touch gestures for calendar navigation
-  - Add mobile-specific UI components
-  - Test on various screen sizes
+1.1  createEvent
 
-- [ ] **Accessibility**
-  - Add ARIA labels and roles
-  - Implement keyboard navigation
-  - Ensure proper color contrast
-  - Add screen reader support
+export const createEvent = tool({
+  description: 'Create a calendar event in the local DB',
+  parameters: z.object({
+    summary:   z.string(),
+    startsAt:  z.string().datetime(),  // ISO-8601 UTC
+    endsAt:    z.string().datetime(),
+    rrule:     z.string().optional(),  // RFC 5545
+    tzid:      z.string().optional()   // IANA zone for display
+  }),
+  async execute(args) {
+    const ruleId = args.rrule
+      ? (await db.rule.create({ data: { rrule: args.rrule, tzid: args.tzid } })).id
+      : undefined;
+    return db.event.create({ data: { ...args, ruleId } });
+  }
+});
 
-- [ ] **Error handling**
-  - Implement global error boundary
-  - Add user-friendly error messages
-  - Set up error logging and monitoring
-  - Add fallback UI components
+Store datetimes in UTC (TIMESTAMPTZ) and keep the user’s zone only for presentation—Postgres converts automatically on read. ￼ ￼
+Recurring events stay lean by persisting the raw RRULE string rather than every instance. ￼
 
-### Features
-- [ ] **Calendar enhancements**
-  - Add recurring events support
-  - Implement event reminders/notifications
-  - Add calendar sharing between family members
-  - Implement event categories and colors
+1.2  updateEvent and cancelEvent
 
-- [ ] **AI assistant improvements**
-  - Add conversation history
-  - Implement context-aware responses
-  - Add voice input/output capabilities
-  - Implement smart event suggestions
+Both tools accept an eventId.
+updateEvent can reuse the same parameter schema as createEvent but mark everything optional.
+cancelEvent should mark any future recurrences as exceptions instead of dropping the parent rule entirely, mirroring the iCalendar EXDATE concept. ￼
 
-### Integration
-- [ ] **External calendar sync**
-  - Google Calendar integration
-  - Apple Calendar integration
-  - Outlook Calendar integration
-  - CalDAV support
+⸻
 
-- [ ] **Notification system**
-  - Push notifications for mobile
-  - Email notifications for events
-  - SMS reminders integration
-  - In-app notification center
+2  Query tools
 
-## 📊 Monitoring & Analytics
+2.1  getEvent
 
-### Application Monitoring
-- [ ] **Set up monitoring tools**
-  - Configure Vercel Analytics
-  - Set up Sentry for error tracking
-  - Implement performance monitoring
-  - Add uptime monitoring
+Returns a single expanded occurrence (respecting overrides) so the model can answer questions like “When exactly is my dentist appointment?”
+It’s essentially a SELECT … WHERE id = $1.
 
-- [ ] **Logging and debugging**
-  - Implement structured logging
-  - Set up log aggregation
-  - Add debug mode for development
-  - Configure log retention policies
+2.2  listEvents
 
-### Analytics
-- [ ] **User analytics**
-  - Track user engagement metrics
-  - Monitor feature usage
-  - Implement A/B testing framework
-  - Add conversion tracking
+parameters: z.object({
+  from: z.string().datetime(),
+  to:   z.string().datetime()
+})
 
-## 🔧 DevOps & Deployment
+Expand RRULEs inside [from, to] with rrule.js and merge in single-shot events and exceptions. ￼ ￼
 
-### CI/CD Pipeline
-- [ ] **Automated testing**
-  - Set up unit tests with Jest
-  - Add integration tests
-  - Implement E2E tests with Playwright
-  - Add accessibility testing
+⸻
 
-- [ ] **Deployment automation**
-  - Set up staging environment
-  - Configure automated deployments
-  - Add deployment health checks
-  - Implement rollback procedures
+3  Availability tools
 
-### Infrastructure
-- [ ] **Scaling preparation**
-  - Configure auto-scaling
-  - Set up load balancing
-  - Implement database sharding strategy
-  - Plan for CDN implementation
+3.1  freeBusy
 
-- [ ] **Backup and recovery**
-  - Set up automated database backups
-  - Create disaster recovery plan
-  - Test backup restoration procedures
-  - Document recovery processes
+parameters: z.object({
+  windowStart: z.string().datetime(),
+  windowEnd:   z.string().datetime()
+})
 
-## 📚 Documentation & Maintenance
+Use a tstzrange GiST index and Postgres’s overlap operator && for an efficient query:
 
-### Documentation
-- [ ] **Technical documentation**
-  - API documentation
-  - Database schema documentation
-  - Deployment guide
-  - Troubleshooting guide
+SELECT during FROM "Event"
+WHERE during && tstzrange($1::timestamptz, $2::timestamptz);
 
-- [ ] **User documentation**
-  - User manual
-  - FAQ section
-  - Video tutorials
-  - Feature announcements
+This yields every busy slot in one pass. ￼ ￼
 
-### Maintenance
-- [ ] **Code quality**
-  - Set up ESLint and Prettier
-  - Add pre-commit hooks
-  - Implement code review process
-  - Add dependency vulnerability scanning
+3.2  findFreeSlot
 
-- [ ] **Regular maintenance tasks**
-  - Schedule dependency updates
-  - Plan regular security audits
-  - Set up performance reviews
-  - Create maintenance schedules
+parameters: z.object({
+  durationMins: z.number().int().positive(),
+  windowStart:  z.string().datetime(),
+  windowEnd:    z.string().datetime()
+})
 
-## 🎯 Success Metrics
+Internally calls freeBusy, subtracts busy ranges from the window, and returns the first gap ≥ durationMins.  The agent often uses this in a two-step loop: call the tool, then confirm with the user.  maxSteps ensures it never spirals. ￼ ￼
 
-### Performance Targets
-- [ ] Page load time < 2 seconds
-- [ ] Time to Interactive (TTI) < 3 seconds
-- [ ] First Contentful Paint (FCP) < 1.5 seconds
-- [ ] Core Web Vitals score > 90
+⸻
 
-### Reliability Targets
-- [ ] 99.9% uptime SLA
-- [ ] Error rate < 0.1%
-- [ ] Database query response time < 100ms
-- [ ] API response time < 200ms
+4  Helper tools (nice-to-haves)
+	•	parseNaturalTime – leverage the model less: parse “next Friday after lunch” to an ISO string server-side.
+	•	guessTimeZone – map IP or locale to an IANA TZ with a GeoIP service.
+	•	convertToUserZone – small wrapper that transforms UTC → user TZ with the Temporal polyfill (Temporal.ZonedDateTime). ￼
 
-## 📋 Implementation Timeline
+Because they hide tricky date math, the LLM spends fewer tokens reasoning and fewer calls fail validation.
 
-### Phase 1 (Weeks 1-2): Security & Core Infrastructure
-- Authentication implementation
-- Database setup and security
-- Basic monitoring setup
+⸻
 
-### Phase 2 (Weeks 3-4): Performance & UX
-- Frontend optimization
-- Mobile responsiveness
-- Error handling
+5  Testing & validation
+	•	Schema validation – Zod catches bad args before they hit the DB. ￼
+	•	Unit tests – Feed fixed prompts into generateText() (single-step) to assert the correct tool JSON.
+	•	Integration tests – Spin up a test Postgres, seed fixtures, stream chat via streamText(), and verify side-effects.  AI-SDK exposes deterministic options so snapshots stay stable. ￼
 
-### Phase 3 (Weeks 5-6): Features & Integrations
-- Calendar enhancements
-- External integrations
-- Notification system
+⸻
 
-### Phase 4 (Weeks 7-8): Testing & Deployment
-- Comprehensive testing
-- CI/CD pipeline
-- Production deployment
+6  Putting it all together in AI-SDK 5
+
+import * as tools from '@/tools/calendar-db';
+
+const result = await streamText({
+  model: openai('gpt-4o'),
+  messages: convertToModelMessages(uiMessages),
+  tools,          // 🌟 every tool described above
+  maxSteps: 5     // agent can chain calls & confirmations
+});
+
+Each tool becomes a tool-{name} part in the message stream; AI-SDK validates parameters, executes your code, injects the result, and lets the model decide what to do next—ask follow-ups, try another tool, or finish. ￼ ￼
+
+⸻
+
+Bottom line
+
+Define a clean, purpose-built tool set—CRUD + availability + optional helpers—wrap every call in Zod, back it with your Postgres event store, and AI-SDK 5 will orchestrate multi-step reasoning for you.  The agent’s logic stays tiny while your database and tools do the heavy lifting.  
+
 
 ## 🏁 Definition of Done
 
