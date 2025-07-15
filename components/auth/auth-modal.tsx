@@ -5,6 +5,8 @@ import type React from "react"
 import { useState } from "react"
 import { X, Mail, Lock, User, Eye, EyeOff, Loader2, Heart } from "lucide-react"
 import { useAuth } from "@/lib/auth/auth-context"
+import { UserOnboardingService } from "@/lib/services/user-onboarding"
+import { supabase } from "@/lib/supabase/client"
 
 interface AuthModalProps {
   isOpen: boolean
@@ -43,7 +45,22 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin" }: A
         if (error) {
           setError(error.message)
         } else {
-          setMessage("Check your email for the confirmation link!")
+          // Create a default family for the new user
+          try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+              await UserOnboardingService.createDefaultFamilyForUser(
+                user.id,
+                email,
+                fullName
+              )
+            }
+            setMessage("Account created successfully! Check your email for confirmation.")
+            onClose()
+          } catch (familyError) {
+            console.error('Error creating family:', familyError)
+            setMessage("Account created! Check your email for confirmation. You can set up your family later.")
+          }
         }
       } else if (mode === "forgot") {
         const { error } = await resetPassword(email)
