@@ -34,14 +34,13 @@ if [ -z "$REPO" ]; then
 fi
 
 echo -e "${GREEN}Importing GitHub issues and milestones for repository: $REPO${NC}"
-echo -e "${YELLOW}Debug: Repository URL: $(git remote get-url origin)${NC}"
 
 # Function to create milestone
 create_milestone() {
   local file="$1"
   local title=$(grep "^# " "$file" | head -1 | sed 's/^# //')
-  local description=$(grep "\*\*Description:\*\*" "$file" | sed 's/\*\*Description:\*\* //')
-  local due_date=$(grep "\*\*Due Date:\*\*" "$file" | sed 's/\*\*Due Date:\*\* //')
+  local description=$(grep "\*\*Description:\*\*" "$file" | sed 's/\*\*Description:\*\* //' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+  local due_date=$(grep "\*\*Due Date:\*\*" "$file" | sed 's/\*\*Due Date:\*\* //' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
   
   if [ -n "$title" ]; then
     echo -e "${YELLOW}Creating milestone: $title${NC}"
@@ -73,56 +72,18 @@ create_milestone() {
   fi
 }
 
-# Function to create issue
+# Function to create simple issue
 create_issue() {
   local file="$1"
   local title=$(grep "^# " "$file" | head -1 | sed 's/^# //')
-  local description=$(grep "^## Description" "$file" -A 1 | tail -1)
-  local type=$(grep "^## Type" "$file" -A 5 | grep "Type:" | sed 's/.*Type:\*\* //')
-  local priority=$(grep "^## Type" "$file" -A 5 | grep "Priority:" | sed 's/.*Priority:\*\* //')
-  local component=$(grep "^## Type" "$file" -A 5 | grep "Component:" | sed 's/.*Component:\*\* //')
-  local milestone=$(grep "^## Type" "$file" -A 5 | grep "Milestone:" | sed 's/.*Milestone:\*\* //')
   
   if [ -n "$title" ]; then
     echo -e "${YELLOW}Creating issue: $title${NC}"
     
-    # Build issue body
-    local body="## Description\n$description\n\n"
-    body+="## Type\n- Type: $type\n- Priority: $priority\n- Component: $component\n- Milestone: $milestone\n\n"
+    # Get the full content of the file as the issue body
+    local body=$(cat "$file")
     
-    # Add acceptance criteria (simplified parsing)
-    if grep -q "## Acceptance Criteria" "$file"; then
-      body+="## Acceptance Criteria\n"
-      # Get content between Acceptance Criteria and Technical Requirements
-      local start_line=$(grep -n "## Acceptance Criteria" "$file" | cut -d: -f1)
-      local end_line=$(grep -n "## Technical Requirements" "$file" | cut -d: -f1)
-      if [ -n "$start_line" ] && [ -n "$end_line" ]; then
-        local criteria_content=$(sed -n "$((start_line + 1)),$((end_line - 1))p" "$file")
-        body+="$criteria_content\n\n"
-      fi
-    fi
-    
-    # Add technical requirements (simplified parsing)
-    if grep -q "## Technical Requirements" "$file"; then
-      body+="## Technical Requirements\n"
-      # Get content between Technical Requirements and Implementation Notes
-      local start_line=$(grep -n "## Technical Requirements" "$file" | cut -d: -f1)
-      local end_line=$(grep -n "## Implementation Notes" "$file" | cut -d: -f1)
-      if [ -n "$start_line" ] && [ -n "$end_line" ]; then
-        local tech_content=$(sed -n "$((start_line + 1)),$((end_line - 1))p" "$file")
-        body+="$tech_content\n\n"
-      fi
-    fi
-    
-    # Add implementation notes (simplified parsing)
-    if grep -q "## Implementation Notes" "$file"; then
-      body+="## Implementation Notes\n"
-      local start_line=$(grep -n "## Implementation Notes" "$file" | cut -d: -f1)
-      local notes_content=$(sed -n "$((start_line + 1)),\$p" "$file")
-      body+="$notes_content\n"
-    fi
-    
-    # Create issue without labels first (to avoid label errors)
+    # Create simple issue without any labels or complex metadata
     gh issue create \
       --repo "$REPO" \
       --title "$title" \
@@ -146,5 +107,4 @@ for file in .github/issues/*.md; do
     fi
 done
 
-echo -e "${GREEN}Import completed!${NC}"
-echo -e "${YELLOW}Note: You may need to manually link issues to milestones in the GitHub web interface.${NC}" 
+echo -e "${GREEN}Import completed!${NC}" 
