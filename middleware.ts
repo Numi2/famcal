@@ -8,9 +8,17 @@ export async function middleware(request: NextRequest) {
     },
   })
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error("Middleware - Missing Supabase environment variables")
+    return response
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
@@ -42,18 +50,31 @@ export async function middleware(request: NextRequest) {
   )
 
   // Refresh the session and handle authentication
-  const {
-    data: { user },
-    error
-  } = await supabase.auth.getUser()
+  try {
+    const {
+      data: { user },
+      error
+    } = await supabase.auth.getUser()
 
-  // Log authentication state for debugging
-  if (request.nextUrl.pathname.startsWith('/api/')) {
-    console.log('Middleware - API route:', request.nextUrl.pathname)
-    console.log('Middleware - User authenticated:', !!user)
-    if (error) {
-      console.error('Middleware - Auth error:', error.message)
+    // Log authentication state for debugging API routes
+    if (request.nextUrl.pathname.startsWith('/api/')) {
+      console.log('Middleware - API route:', request.nextUrl.pathname)
+      console.log('Middleware - Cookies count:', request.cookies.getAll().length)
+      console.log('Middleware - User authenticated:', !!user)
+      if (error) {
+        console.error('Middleware - Auth error:', error.message)
+      }
     }
+
+    // If we have a user, ensure the session is properly refreshed
+    if (user) {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        console.log('Middleware - Session refreshed successfully')
+      }
+    }
+  } catch (error) {
+    console.error('Middleware - Unexpected error:', error)
   }
 
   return response

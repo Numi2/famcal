@@ -2,16 +2,30 @@ import { createClient } from "@supabase/supabase-js"
 import type { Database } from "./family-types"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+// Create client lazily to avoid build-time environment variable issues
+let _supabase: SupabaseClient<Database> | null = null
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
+function getSupabaseClient(): SupabaseClient<Database> {
+  if (!_supabase) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error("Missing Supabase environment variables")
+    }
+    
+    _supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
+  }
+  return _supabase
+}
+
+export const supabase = getSupabaseClient
 
 // Family-specific database operations
 export const familyDb = {
   // Families
   async createFamily(name: string, description?: string, client?: SupabaseClient<Database>) {
-    const supabaseClient = client || supabase
+    const supabaseClient = client || getSupabaseClient()
     const {
       data: { user },
     } = await supabaseClient.auth.getUser()
@@ -32,7 +46,7 @@ export const familyDb = {
   },
 
   async getFamilyByUserId(userId: string, client?: SupabaseClient<Database>) {
-    const supabaseClient = client || supabase
+    const supabaseClient = client || getSupabaseClient()
     const { data, error } = await supabaseClient
       .from("family_members")
       .select(`
@@ -62,7 +76,7 @@ export const familyDb = {
     },
     client?: SupabaseClient<Database>
   ) {
-    const supabaseClient = client || supabase
+    const supabaseClient = client || getSupabaseClient()
     const { data, error } = await supabaseClient
       .from("family_members")
       .insert({
@@ -77,7 +91,7 @@ export const familyDb = {
   },
 
   async getFamilyMembers(familyId: string, client?: SupabaseClient<Database>) {
-    const supabaseClient = client || supabase
+    const supabaseClient = client || getSupabaseClient()
     const { data, error } = await supabaseClient
       .from("family_members")
       .select("*")
@@ -105,7 +119,7 @@ export const familyDb = {
     priority?: "low" | "medium" | "high" | "urgent"
     family_id: string
   }, client?: SupabaseClient<Database>) {
-    const supabaseClient = client || supabase
+    const supabaseClient = client || getSupabaseClient()
     const { data, error } = await supabaseClient.from("family_events").insert(eventData).select().single()
 
     if (error) throw error
@@ -113,7 +127,7 @@ export const familyDb = {
   },
 
   async getFamilyEvents(familyId: string, day?: number, client?: SupabaseClient<Database>) {
-    const supabaseClient = client || supabase
+    const supabaseClient = client || getSupabaseClient()
     let query = supabaseClient.from("family_events").select("*").eq("family_id", familyId)
 
     if (day) {
@@ -140,7 +154,7 @@ export const familyDb = {
     family_id: string
     created_by: string
   }, client?: SupabaseClient<Database>) {
-    const supabaseClient = client || supabase
+    const supabaseClient = client || getSupabaseClient()
     const { data, error } = await supabaseClient.from("meal_plans").insert(mealData).select().single()
 
     if (error) throw error
@@ -148,7 +162,7 @@ export const familyDb = {
   },
 
   async getMealPlans(familyId: string, day?: number, client?: SupabaseClient<Database>) {
-    const supabaseClient = client || supabase
+    const supabaseClient = client || getSupabaseClient()
     let query = supabaseClient.from("meal_plans").select("*").eq("family_id", familyId)
 
     if (day) {
@@ -173,7 +187,7 @@ export const familyDb = {
     family_id: string
     created_by: string
   }, client?: SupabaseClient<Database>) {
-    const supabaseClient = client || supabase
+    const supabaseClient = client || getSupabaseClient()
     const { data, error } = await supabaseClient.from("chore_assignments").insert(choreData).select().single()
 
     if (error) throw error
@@ -181,7 +195,7 @@ export const familyDb = {
   },
 
   async getChoreAssignments(familyId: string, assignedTo?: string, client?: SupabaseClient<Database>) {
-    const supabaseClient = client || supabase
+    const supabaseClient = client || getSupabaseClient()
     let query = supabaseClient.from("chore_assignments").select("*").eq("family_id", familyId)
 
     if (assignedTo) {
@@ -195,7 +209,7 @@ export const familyDb = {
   },
 
   async updateChoreCompletion(choreId: string, completed: boolean) {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from("chore_assignments")
       .update({
         completed,
@@ -217,7 +231,7 @@ export const familyDb = {
     cost?: "free" | "low" | "medium" | "high"
     duration?: number
   }, client?: SupabaseClient<Database>) {
-    const supabaseClient = client || supabase
+    const supabaseClient = client || getSupabaseClient()
     let query = supabaseClient.from("activity_suggestions").select("*").eq("is_public", true)
 
     if (filters?.minAge) {
@@ -244,7 +258,7 @@ export const familyDb = {
 
   // Family Insights
   async getFamilyInsights(familyId: string) {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from("family_insights")
       .select("*")
       .eq("family_id", familyId)
@@ -257,7 +271,7 @@ export const familyDb = {
   },
 
   async dismissInsight(insightId: string) {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from("family_insights")
       .update({
         dismissed: true,

@@ -1,14 +1,69 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getAuthenticatedUser, createServerSupabaseClient } from "@/lib/supabase/server-helpers"
+import { createServerClient } from "@supabase/ssr"
 import { UserOnboardingService } from "@/lib/services/user-onboarding"
+import type { Database } from "@/lib/supabase/types"
 
 export async function POST(request: NextRequest) {
+  // Create response object first
+  let response = NextResponse.next()
+  
   try {
-    // Get authenticated user with improved error handling
-    const { user, error: authError } = await getAuthenticatedUser()
+    // Debug: Log incoming cookies
+    const cookies = request.cookies.getAll()
+    console.log("API Route - Incoming cookies:", cookies.map(c => ({ name: c.name, hasValue: !!c.value })))
+    
+    // Validate environment variables
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error("Missing Supabase environment variables:", { 
+        hasUrl: !!supabaseUrl, 
+        hasKey: !!supabaseAnonKey,
+        nodeEnv: process.env.NODE_ENV
+      })
+      return NextResponse.json({
+        error: "Server configuration error",
+        details: "Missing required environment variables",
+        hint: "Please check your Supabase environment variables"
+      }, { status: 500 })
+    }
+
+    // Create Supabase client specifically for API routes
+    const supabase = createServerClient<Database>(
+      supabaseUrl,
+      supabaseAnonKey,
+      {
+        cookies: {
+          getAll() {
+            const allCookies = request.cookies.getAll()
+            console.log("Supabase client - getAll cookies:", allCookies.length)
+            return allCookies
+          },
+          setAll(cookiesToSet) {
+            console.log("Supabase client - setAll cookies:", cookiesToSet.length)
+            cookiesToSet.forEach(({ name, value, options }) => {
+              request.cookies.set({ name, value, ...options })
+              response.cookies.set({ name, value, ...options })
+            })
+          },
+        },
+      },
+    )
+
+    // Get authenticated user
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
 
     if (authError) {
-      console.error("Authentication error in family setup:", authError)
+      console.error("Supabase auth error in family setup:", {
+        message: authError.message,
+        status: authError.status,
+        name: authError.name,
+        cause: authError.cause
+      })
       return NextResponse.json(
         { 
           error: "Authentication failed", 
@@ -20,6 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!user) {
+      console.error("No user found in session during family setup")
       return NextResponse.json(
         { 
           error: "Unauthorized", 
@@ -31,9 +87,6 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("User authenticated successfully:", user.id)
-    
-    // Create a fresh Supabase client for the operation
-    const supabase = await createServerSupabaseClient()
 
     const body = await request.json()
     const { familyName, familyDescription, members } = body
