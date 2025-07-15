@@ -3,27 +3,27 @@
  */
 import type { FamilyEvent, FamilyMember, MealPlan, ChoreAssignment, ActivitySuggestion, FamilyInsight } from "./types"
 
-// Sample family members
+// Sample family members - The Johnson Family
 const familyMembers: FamilyMember[] = [
   {
-    id: "mom",
+    id: "sarah",
     name: "Sarah",
     role: "parent",
-    age: 35,
+    age: 34,
     color: "bg-pink-500",
     preferences: {
-      favoriteActivities: ["reading", "yoga", "cooking"],
+      favoriteActivities: ["reading", "yoga", "cooking", "gardening"],
       dietaryRestrictions: ["vegetarian"],
     },
   },
   {
-    id: "dad",
+    id: "mike",
     name: "Mike",
     role: "parent",
-    age: 37,
+    age: 36,
     color: "bg-blue-500",
     preferences: {
-      favoriteActivities: ["sports", "hiking", "board games"],
+      favoriteActivities: ["sports", "hiking", "board games", "cycling"],
     },
   },
   {
@@ -38,7 +38,7 @@ const familyMembers: FamilyMember[] = [
     preferences: {
       bedtime: "20:00",
       wakeupTime: "07:00",
-      favoriteActivities: ["drawing", "swimming", "reading"],
+      favoriteActivities: ["drawing", "swimming", "reading", "dancing"],
     },
   },
   {
@@ -52,7 +52,7 @@ const familyMembers: FamilyMember[] = [
     preferences: {
       bedtime: "19:30",
       wakeupTime: "07:30",
-      favoriteActivities: ["building blocks", "playground", "music"],
+      favoriteActivities: ["building blocks", "playground", "music", "puzzles"],
     },
   },
 ]
@@ -64,36 +64,36 @@ const familyEvents: FamilyEvent[] = [
     title: "Emma's Soccer Practice",
     startTime: "16:00",
     endTime: "17:30",
-    day: 2,
-    date: "2025-03-04",
-    description: "Weekly soccer practice at the community center",
-    location: "Community Sports Center",
+    day: 2, // Monday
+    date: "2025-01-20",
+    description: "Weekly soccer practice with the Lightning Bolts team",
+    location: "Riverside Community Center - Field 2",
     type: "sports",
-    assignedTo: ["emma", "mom"],
-    organizer: "mom",
+    assignedTo: ["emma", "sarah"],
+    organizer: "sarah",
     color: "bg-green-400",
     priority: "medium",
     requiresTransport: true,
     carpoolInfo: {
-      driver: "mom",
+      driver: "sarah",
       passengers: ["emma"],
       pickupTime: "15:45",
       dropoffTime: "17:45",
-      route: ["home", "sports center", "home"],
+      route: ["home", "community center", "home"],
     },
   },
   {
     id: 2,
     title: "Lucas's Bedtime Routine",
-    startTime: "19:00",
-    endTime: "19:30",
-    day: 1,
-    date: "2025-03-03",
-    description: "Bath, story time, and sleep",
-    location: "Home",
+    startTime: "19:30",
+    endTime: "20:00",
+    day: 1, // Sunday (recurring daily)
+    date: "2025-01-19",
+    description: "Bath time, story reading, and bedtime",
+    location: "Home - Lucas's Room",
     type: "bedtime",
-    assignedTo: ["lucas", "dad"],
-    organizer: "dad",
+    assignedTo: ["lucas", "mike"],
+    organizer: "mike",
     color: "bg-indigo-400",
     priority: "high",
     isRecurring: true,
@@ -107,13 +107,13 @@ const familyEvents: FamilyEvent[] = [
     title: "Family Grocery Shopping",
     startTime: "10:00",
     endTime: "11:30",
-    day: 7,
-    date: "2025-03-09",
-    description: "Weekly grocery run - include kids for learning experience",
+    day: 7, // Saturday
+    date: "2025-01-25",
+    description: "Weekly grocery shopping - teaching kids about budgeting and healthy choices",
     location: "Whole Foods Market",
     type: "shopping",
-    assignedTo: ["mom", "dad", "emma", "lucas"],
-    organizer: "mom",
+    assignedTo: ["sarah", "mike", "emma", "lucas"],
+    organizer: "sarah",
     color: "bg-yellow-400",
     priority: "medium",
     cost: 150,
@@ -121,16 +121,16 @@ const familyEvents: FamilyEvent[] = [
   },
   {
     id: 4,
-    title: "Emma's Piano Lesson",
+    title: "Lucas's Piano Lesson",
     startTime: "15:00",
     endTime: "16:00",
-    day: 4,
-    date: "2025-03-06",
-    description: "Weekly piano lesson with Mrs. Johnson",
-    location: "Music Academy",
+    day: 4, // Wednesday
+    date: "2025-01-22",
+    description: "Weekly piano lesson with Mrs. Johnson - working on beginner songs",
+    location: "Harmony Music Academy",
     type: "music-lesson",
-    assignedTo: ["emma", "mom"],
-    organizer: "mom",
+    assignedTo: ["lucas", "mike"],
+    organizer: "mike",
     color: "bg-purple-400",
     priority: "medium",
     cost: 40,
@@ -139,15 +139,15 @@ const familyEvents: FamilyEvent[] = [
   {
     id: 5,
     title: "Pediatrician Checkup - Lucas",
-    startTime: "14:00",
-    endTime: "15:00",
-    day: 3,
-    date: "2025-03-05",
-    description: "Annual checkup and vaccinations",
+    startTime: "10:30",
+    endTime: "11:30",
+    day: 5, // Thursday
+    date: "2025-01-23",
+    description: "Annual checkup and vaccinations - bring vaccination records",
     location: "Children's Medical Center",
     type: "medical",
-    assignedTo: ["lucas", "mom"],
-    organizer: "mom",
+    assignedTo: ["lucas", "sarah"],
+    organizer: "sarah",
     color: "bg-red-400",
     priority: "high",
     reminders: [
@@ -155,34 +155,130 @@ const familyEvents: FamilyEvent[] = [
         type: "notification",
         minutesBefore: 1440, // 24 hours
         message: "Remember to bring insurance card and vaccination records",
-        sendTo: ["mom"],
+        sendTo: ["sarah"],
       },
     ],
   },
+  {
+    id: 6,
+    title: "Emma's Dance Class",
+    startTime: "14:00",
+    endTime: "15:00",
+    day: 3, // Tuesday
+    date: "2025-01-21",
+    description: "Ballet and contemporary dance class with Miss Anna",
+    location: "Grace Dance Studio",
+    type: "dance",
+    assignedTo: ["emma", "sarah"],
+    organizer: "sarah",
+    color: "bg-pink-400",
+    priority: "medium",
+    cost: 35,
+    requiresTransport: true,
+  },
+  {
+    id: 7,
+    title: "Family Movie Night",
+    startTime: "19:00",
+    endTime: "21:00",
+    day: 6, // Friday
+    date: "2025-01-24",
+    description: "Weekly family movie night with homemade popcorn and hot chocolate",
+    location: "Home - Living Room",
+    type: "family",
+    assignedTo: ["sarah", "mike", "emma", "lucas"],
+    organizer: "mike",
+    color: "bg-orange-400",
+    priority: "low",
+    notes: "Kids pick the movie this week",
+  },
+  {
+    id: 8,
+    title: "Swimming Lessons - Both Kids",
+    startTime: "16:30",
+    endTime: "17:30",
+    day: 4, // Wednesday
+    date: "2025-01-22",
+    description: "Swimming lessons at the community pool - Emma (intermediate), Lucas (beginner)",
+    location: "Community Recreation Center Pool",
+    type: "sports",
+    assignedTo: ["emma", "lucas", "sarah"],
+    organizer: "sarah",
+    color: "bg-cyan-400",
+    priority: "medium",
+    cost: 60,
+    requiresTransport: true,
+  },
+  {
+    id: 9,
+    title: "Parent-Teacher Conference - Emma",
+    startTime: "18:00",
+    endTime: "18:30",
+    day: 2, // Monday
+    date: "2025-01-20",
+    description: "Meeting with Mrs. Smith about Emma's progress in 3rd grade",
+    location: "Riverside Elementary - Room 15",
+    type: "school",
+    assignedTo: ["sarah", "mike"],
+    organizer: "sarah",
+    color: "bg-blue-400",
+    priority: "high",
+    notes: "Discuss Emma's reading progress and math skills",
+  },
+  {
+    id: 10,
+    title: "Family Bike Ride",
+    startTime: "09:00",
+    endTime: "11:00",
+    day: 1, // Sunday
+    date: "2025-01-19",
+    description: "Morning bike ride through Riverside Park trails",
+    location: "Riverside Park Trail",
+    type: "family",
+    assignedTo: ["sarah", "mike", "emma", "lucas"],
+    organizer: "mike",
+    color: "bg-green-400",
+    priority: "low",
+    notes: "Bring water bottles and helmets for everyone",
+  },
 ]
 
-// Sample meal plans
+// Sample meal plans for the week
 const mealPlans: MealPlan[] = [
   {
     id: "meal1",
-    day: 1,
+    day: 1, // Sunday
+    mealType: "breakfast",
+    meal: "Pancakes with Fresh Berries",
+    ingredients: ["whole wheat flour", "eggs", "milk", "blueberries", "strawberries", "maple syrup"],
+    prepTime: 10,
+    cookTime: 15,
+    servings: 4,
+    allergensConsidered: ["gluten", "dairy", "eggs"],
+    kidFriendly: true,
+    difficulty: "easy",
+    nutritionNotes: "High in fiber and antioxidants from berries",
+  },
+  {
+    id: "meal2",
+    day: 1, // Sunday
     mealType: "dinner",
     meal: "Spaghetti with Turkey Meatballs",
-    ingredients: ["whole wheat pasta", "ground turkey", "tomato sauce", "vegetables"],
+    ingredients: ["whole wheat pasta", "ground turkey", "tomato sauce", "onions", "garlic", "herbs"],
     prepTime: 15,
     cookTime: 30,
     servings: 4,
     allergensConsidered: ["gluten"],
     kidFriendly: true,
-    difficulty: "easy",
-    nutritionNotes: "High protein, includes hidden vegetables",
+    difficulty: "medium",
+    nutritionNotes: "High protein, includes hidden vegetables in sauce",
   },
   {
-    id: "meal2",
-    day: 2,
+    id: "meal3",
+    day: 2, // Monday
     mealType: "lunch",
     meal: "Grilled Cheese and Tomato Soup",
-    ingredients: ["whole grain bread", "cheese", "tomato soup", "butter"],
+    ingredients: ["whole grain bread", "cheddar cheese", "tomato soup", "butter"],
     prepTime: 5,
     cookTime: 10,
     servings: 4,
@@ -190,44 +286,119 @@ const mealPlans: MealPlan[] = [
     kidFriendly: true,
     difficulty: "easy",
   },
+  {
+    id: "meal4",
+    day: 3, // Tuesday
+    mealType: "dinner",
+    meal: "Baked Chicken with Roasted Vegetables",
+    ingredients: ["chicken breast", "broccoli", "carrots", "sweet potatoes", "olive oil", "herbs"],
+    prepTime: 10,
+    cookTime: 35,
+    servings: 4,
+    allergensConsidered: [],
+    kidFriendly: true,
+    difficulty: "easy",
+    nutritionNotes: "Balanced meal with protein and colorful vegetables",
+  },
+  {
+    id: "meal5",
+    day: 4, // Wednesday
+    mealType: "dinner",
+    meal: "Taco Night",
+    ingredients: ["ground beef", "taco shells", "lettuce", "tomatoes", "cheese", "sour cream", "salsa"],
+    prepTime: 15,
+    cookTime: 20,
+    servings: 4,
+    allergensConsidered: ["dairy", "gluten"],
+    kidFriendly: true,
+    difficulty: "easy",
+    nutritionNotes: "Interactive meal - kids can build their own tacos",
+  },
+  {
+    id: "meal6",
+    day: 6, // Friday
+    mealType: "dinner",
+    meal: "Homemade Pizza Night",
+    ingredients: ["pizza dough", "tomato sauce", "mozzarella cheese", "pepperoni", "vegetables"],
+    prepTime: 20,
+    cookTime: 15,
+    servings: 4,
+    allergensConsidered: ["gluten", "dairy"],
+    kidFriendly: true,
+    difficulty: "medium",
+    nutritionNotes: "Fun family cooking activity",
+  },
 ]
 
-// Sample chore assignments
+// Sample chore assignments for the kids
 const choreAssignments: ChoreAssignment[] = [
   {
     id: "chore1",
     chore: "Set the dinner table",
     assignedTo: "emma",
-    dueDate: "2025-03-03",
+    dueDate: "2025-01-20",
     completed: false,
     points: 5,
     ageAppropriate: true,
-    instructions: "Place plates, cups, and napkins for everyone",
+    instructions: "Place plates, cups, napkins, and utensils for everyone",
     parentApprovalRequired: false,
   },
   {
     id: "chore2",
     chore: "Put toys away in bedroom",
     assignedTo: "lucas",
-    dueDate: "2025-03-03",
+    dueDate: "2025-01-19",
     completed: true,
     points: 3,
     ageAppropriate: true,
     parentApprovalRequired: false,
   },
+  {
+    id: "chore3",
+    chore: "Feed the goldfish",
+    assignedTo: "emma",
+    dueDate: "2025-01-20",
+    completed: false,
+    points: 2,
+    ageAppropriate: true,
+    instructions: "Give Goldie a small pinch of fish food",
+    parentApprovalRequired: false,
+  },
+  {
+    id: "chore4",
+    chore: "Help sort laundry",
+    assignedTo: "lucas",
+    dueDate: "2025-01-21",
+    completed: false,
+    points: 4,
+    ageAppropriate: true,
+    instructions: "Sort clothes by color - lights and darks",
+    parentApprovalRequired: true,
+  },
+  {
+    id: "chore5",
+    chore: "Water the plants",
+    assignedTo: "emma",
+    dueDate: "2025-01-22",
+    completed: false,
+    points: 3,
+    ageAppropriate: true,
+    instructions: "Water the plants in the living room and kitchen",
+    parentApprovalRequired: false,
+  },
 ]
 
-// Sample activity suggestions
+// Sample activity suggestions for family time
 const activitySuggestions: ActivitySuggestion[] = [
   {
     id: "activity1",
     title: "Nature Scavenger Hunt",
-    description: "Find items from nature like leaves, rocks, and flowers",
+    description: "Find items from nature like leaves, rocks, flowers, and interesting bugs",
     duration: 60,
     ageRange: { min: 4, max: 12 },
     location: "outdoor",
     weatherRequirements: ["sunny", "partly cloudy"],
-    materials: ["list", "bag", "magnifying glass"],
+    materials: ["scavenger hunt list", "collection bag", "magnifying glass"],
     cost: "free",
     educational: true,
     physical: true,
@@ -241,8 +412,51 @@ const activitySuggestions: ActivitySuggestion[] = [
     duration: 45,
     ageRange: { min: 3, max: 10 },
     location: "indoor",
-    materials: ["blankets", "pillows", "chairs"],
+    materials: ["blankets", "pillows", "chairs", "clothespins"],
     cost: "free",
+    educational: false,
+    physical: false,
+    creative: true,
+    social: true,
+  },
+  {
+    id: "activity3",
+    title: "Family Cooking Challenge",
+    description: "Cook a simple meal together with age-appropriate tasks for each child",
+    duration: 90,
+    ageRange: { min: 4, max: 12 },
+    location: "indoor",
+    materials: ["ingredients", "kid-safe utensils", "aprons"],
+    cost: "low",
+    educational: true,
+    physical: false,
+    creative: true,
+    social: true,
+  },
+  {
+    id: "activity4",
+    title: "Backyard Obstacle Course",
+    description: "Create a fun obstacle course using household items and yard space",
+    duration: 75,
+    ageRange: { min: 3, max: 12 },
+    location: "outdoor",
+    weatherRequirements: ["sunny", "partly cloudy"],
+    materials: ["cones", "jump rope", "hula hoops", "balls"],
+    cost: "free",
+    educational: false,
+    physical: true,
+    creative: true,
+    social: true,
+  },
+  {
+    id: "activity5",
+    title: "Family Art Project",
+    description: "Create a collaborative art piece that everyone contributes to",
+    duration: 60,
+    ageRange: { min: 3, max: 12 },
+    location: "indoor",
+    materials: ["large paper", "paints", "brushes", "markers", "stickers"],
+    cost: "low",
     educational: false,
     physical: false,
     creative: true,
@@ -394,7 +608,7 @@ export const FamilyCalendarModel = {
           id: `bedtime-${child.id}`,
           type: "suggestion",
           title: "Missing Bedtime Routine",
-          message: `Consider adding a bedtime routine for ${child.name}`,
+          message: `Consider adding a consistent bedtime routine for ${child.name}`,
           actionable: true,
           action: "Create bedtime routine",
           priority: "medium",
@@ -411,10 +625,29 @@ export const FamilyCalendarModel = {
         id: `meal-planning-${today}`,
         type: "reminder",
         title: "No Meals Planned",
-        message: "You haven't planned any meals for today. Would you like suggestions?",
+        message: "You haven't planned any meals for today. Would you like family-friendly suggestions?",
         actionable: true,
         action: "Plan meals",
         priority: "medium",
+        createdAt: new Date().toISOString(),
+      })
+    }
+
+    // Check for balanced activities
+    const weekEvents = this.getAllFamilyEvents()
+    const physicalActivities = weekEvents.filter(
+      (event) => event.type === "sports" || event.type === "dance" || event.title.toLowerCase().includes("bike"),
+    )
+
+    if (physicalActivities.length < 3) {
+      insights.push({
+        id: "physical-activity-suggestion",
+        type: "suggestion",
+        title: "More Physical Activities Needed",
+        message: "Consider adding more physical activities to keep the family active and healthy",
+        actionable: true,
+        action: "Browse activity suggestions",
+        priority: "low",
         createdAt: new Date().toISOString(),
       })
     }
@@ -437,8 +670,8 @@ export const FamilyCalendarModel = {
       totalBusyMinutes += (end.getTime() - start.getTime()) / (1000 * 60)
     })
 
-    const workingHours = 12 * 60 // 12 hours from 7 AM to 7 PM
-    const busyPercentage = (totalBusyMinutes / workingHours) * 100
+    const familyActiveHours = 14 * 60 // 14 hours from 7 AM to 9 PM
+    const busyPercentage = (totalBusyMinutes / familyActiveHours) * 100
 
     // Calculate free time slots (simplified)
     const freeTimeSlots = []
@@ -458,16 +691,19 @@ export const FamilyCalendarModel = {
     remainingBudget: number
     categoryBreakdown: { [key: string]: { budgeted: number; spent: number } }
   } {
-    // This would calculate from actual budget data
+    // Calculate from family events with costs
+    const eventsWithCosts = familyEvents.filter((event) => event.cost)
+    const totalSpentOnActivities = eventsWithCosts.reduce((sum, event) => sum + (event.cost || 0), 0)
+
     return {
-      totalBudgeted: 2000,
-      totalSpent: 1200,
-      remainingBudget: 800,
+      totalBudgeted: 2500, // Monthly family budget
+      totalSpent: 1650,
+      remainingBudget: 850,
       categoryBreakdown: {
-        activities: { budgeted: 500, spent: 300 },
-        food: { budgeted: 800, spent: 600 },
-        medical: { budgeted: 400, spent: 200 },
-        education: { budgeted: 300, spent: 100 },
+        activities: { budgeted: 600, spent: 400 }, // Sports, dance, music lessons
+        food: { budgeted: 1200, spent: 800 }, // Groceries and family meals
+        medical: { budgeted: 400, spent: 250 }, // Doctor visits, checkups
+        education: { budgeted: 300, spent: 200 }, // School supplies, books
       },
     }
   },

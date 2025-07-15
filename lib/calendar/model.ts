@@ -10,67 +10,187 @@ import type {
   ScheduleSummary,
 } from "./types"
 
-// Sample calendar data - in a real implementation, this would come from a database
+// Sample family calendar data - focused on family activities and schedules
 const events: CalendarEvent[] = [
   {
     id: 1,
-    title: "Team Meeting",
-    startTime: "09:00",
-    endTime: "10:00",
-    color: "bg-blue-500",
-    day: 1,
-    description: "Weekly team sync-up",
-    location: "Conference Room A",
-    attendees: ["John Doe", "Jane Smith", "Bob Johnson"],
-    organizer: "Alice Brown",
+    title: "Emma's Soccer Practice",
+    startTime: "16:00",
+    endTime: "17:30",
+    color: "bg-green-500",
+    day: 2, // Monday
+    description: "Weekly soccer practice at the community center",
+    location: "Riverside Community Center",
+    attendees: ["Emma", "Sarah (Mom)"],
+    organizer: "Sarah",
   },
   {
     id: 2,
-    title: "Lunch with Sarah",
-    startTime: "12:30",
-    endTime: "13:30",
-    color: "bg-green-500",
-    day: 1,
-    description: "Discuss project timeline",
-    location: "Cafe Nero",
-    attendees: ["Sarah Lee"],
-    organizer: "You",
+    title: "Family Grocery Shopping",
+    startTime: "10:00",
+    endTime: "11:30",
+    color: "bg-blue-500",
+    day: 7, // Saturday
+    description: "Weekly grocery shopping trip - include kids for learning",
+    location: "Whole Foods Market",
+    attendees: ["Sarah", "Mike", "Emma", "Lucas"],
+    organizer: "Sarah",
   },
   {
     id: 3,
-    title: "Project Review",
-    startTime: "14:00",
-    endTime: "15:30",
+    title: "Lucas's Piano Lesson",
+    startTime: "15:00",
+    endTime: "16:00",
     color: "bg-purple-500",
-    day: 3,
-    description: "Q2 project progress review",
-    location: "Meeting Room 3",
-    attendees: ["Team Alpha", "Stakeholders"],
-    organizer: "Project Manager",
+    day: 4, // Wednesday
+    description: "Weekly piano lesson with Mrs. Johnson",
+    location: "Harmony Music Academy",
+    attendees: ["Lucas", "Mike (Dad)"],
+    organizer: "Mike",
   },
   {
     id: 4,
-    title: "Client Call",
-    startTime: "10:00",
-    endTime: "11:00",
-    color: "bg-yellow-500",
-    day: 2,
-    description: "Quarterly review with major client",
-    location: "Zoom Meeting",
-    attendees: ["Client Team", "Sales Team"],
-    organizer: "Account Manager",
+    title: "Family Movie Night",
+    startTime: "19:00",
+    endTime: "21:00",
+    color: "bg-pink-500",
+    day: 6, // Friday
+    description: "Weekly family movie night with popcorn and snacks",
+    location: "Home - Living Room",
+    attendees: ["Sarah", "Mike", "Emma", "Lucas"],
+    organizer: "Mike",
   },
   {
     id: 5,
-    title: "Team Brainstorm",
-    startTime: "13:00",
-    endTime: "14:30",
+    title: "Emma's Dance Class",
+    startTime: "14:00",
+    endTime: "15:00",
+    color: "bg-yellow-500",
+    day: 3, // Tuesday
+    description: "Ballet and contemporary dance class",
+    location: "Grace Dance Studio",
+    attendees: ["Emma", "Sarah (Mom)"],
+    organizer: "Sarah",
+  },
+  {
+    id: 6,
+    title: "Pediatrician Checkup - Lucas",
+    startTime: "10:30",
+    endTime: "11:30",
+    color: "bg-red-500",
+    day: 5, // Thursday
+    description: "Annual checkup and vaccinations for Lucas",
+    location: "Children's Medical Center",
+    attendees: ["Lucas", "Sarah (Mom)"],
+    organizer: "Sarah",
+  },
+  {
+    id: 7,
+    title: "Parent-Teacher Conference",
+    startTime: "18:00",
+    endTime: "18:30",
     color: "bg-indigo-500",
-    day: 4,
-    description: "Ideation session for new product features",
-    location: "Creative Space",
-    attendees: ["Product Team", "Design Team"],
-    organizer: "Product Owner",
+    day: 2, // Monday
+    description: "Meeting with Emma's 3rd grade teacher",
+    location: "Riverside Elementary School",
+    attendees: ["Sarah", "Mike"],
+    organizer: "Sarah",
+  },
+  {
+    id: 8,
+    title: "Family Bike Ride",
+    startTime: "09:00",
+    endTime: "11:00",
+    color: "bg-green-400",
+    day: 1, // Sunday
+    description: "Morning bike ride through the park trails",
+    location: "Riverside Park Trail",
+    attendees: ["Sarah", "Mike", "Emma", "Lucas"],
+    organizer: "Mike",
+  },
+  {
+    id: 9,
+    title: "Swimming Lessons - Both Kids",
+    startTime: "16:30",
+    endTime: "17:30",
+    color: "bg-cyan-500",
+    day: 4, // Wednesday
+    description: "Swimming lessons at the community pool",
+    location: "Community Recreation Center Pool",
+    attendees: ["Emma", "Lucas", "Sarah (Mom)"],
+    organizer: "Sarah",
+  },
+  {
+    id: 10,
+    title: "Family Game Night",
+    startTime: "19:30",
+    endTime: "21:00",
+    color: "bg-orange-500",
+    day: 3, // Tuesday
+    description: "Board games and family fun time",
+    location: "Home - Dining Room",
+    attendees: ["Sarah", "Mike", "Emma", "Lucas"],
+    organizer: "Mike",
+  },
+  {
+    id: 11,
+    title: "School Pickup - Emma",
+    startTime: "15:15",
+    endTime: "15:30",
+    color: "bg-amber-500",
+    day: 1, // Sunday (recurring daily)
+    description: "Daily school pickup for Emma",
+    location: "Riverside Elementary School",
+    attendees: ["Emma", "Sarah (Mom)"],
+    organizer: "Sarah",
+  },
+  {
+    id: 12,
+    title: "Bedtime Routine - Lucas",
+    startTime: "19:30",
+    endTime: "20:00",
+    color: "bg-slate-500",
+    day: 1, // Sunday (recurring daily)
+    description: "Bath time, story reading, and bedtime",
+    location: "Home - Lucas's Room",
+    attendees: ["Lucas", "Mike (Dad)"],
+    organizer: "Mike",
+  },
+  {
+    id: 13,
+    title: "Family Breakfast",
+    startTime: "08:00",
+    endTime: "08:30",
+    color: "bg-rose-500",
+    day: 1, // Sunday
+    description: "Special Sunday family breakfast together",
+    location: "Home - Kitchen",
+    attendees: ["Sarah", "Mike", "Emma", "Lucas"],
+    organizer: "Sarah",
+  },
+  {
+    id: 14,
+    title: "Dentist Appointment - Emma",
+    startTime: "14:00",
+    endTime: "15:00",
+    color: "bg-red-400",
+    day: 6, // Friday
+    description: "Regular dental checkup and cleaning",
+    location: "Smile Dental Care",
+    attendees: ["Emma", "Sarah (Mom)"],
+    organizer: "Sarah",
+  },
+  {
+    id: 15,
+    title: "Playdate at Park",
+    startTime: "15:30",
+    endTime: "17:00",
+    color: "bg-lime-500",
+    day: 7, // Saturday
+    description: "Playdate with Emma's school friends",
+    location: "Riverside Park Playground",
+    attendees: ["Emma", "Lucas", "Sarah (Mom)"],
+    organizer: "Sarah",
   },
 ]
 
@@ -245,8 +365,8 @@ export const CalendarModel = {
 
     // Find free time slots
     const freeSlots: TimeSlot[] = []
-    const workdayStart = "08:00"
-    const workdayEnd = "17:00"
+    const workdayStart = "07:00" // Family day starts earlier
+    const workdayEnd = "21:00" // Family day ends later
 
     let currentTime = workdayStart
 
@@ -312,27 +432,27 @@ export const CalendarModel = {
       }
     })
 
-    // Calculate working hours in the range
-    const workingHoursPerDay = getMinutesBetween("08:00", "17:00") / 60
-    const totalWorkingHours = workingHoursPerDay * (endDay - startDay + 1)
+    // Calculate family active hours (7 AM to 9 PM)
+    const familyHoursPerDay = getMinutesBetween("07:00", "21:00") / 60
+    const totalFamilyHours = familyHoursPerDay * (endDay - startDay + 1)
     const busyHours = totalBusyMinutes / 60
-    const freeHours = totalWorkingHours - busyHours
+    const freeHours = totalFamilyHours - busyHours
 
     return {
       totalEvents: rangeEvents.length,
       busyHours,
       freeHours,
-      busyPercentage: (busyHours / totalWorkingHours) * 100,
+      busyPercentage: (busyHours / totalFamilyHours) * 100,
       mostBusyDay: {
         day: mostBusyDay,
         eventCount: maxEvents,
       },
       upcomingDeadlines: rangeEvents.filter(
         (event) =>
-          event.title.toLowerCase().includes("deadline") ||
-          event.title.toLowerCase().includes("due") ||
-          event.description.toLowerCase().includes("deadline") ||
-          event.description.toLowerCase().includes("due"),
+          event.title.toLowerCase().includes("appointment") ||
+          event.title.toLowerCase().includes("checkup") ||
+          event.title.toLowerCase().includes("conference") ||
+          event.description.toLowerCase().includes("important"),
       ),
     }
   },
