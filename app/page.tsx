@@ -84,14 +84,16 @@ export default function FamilyCalendarHome() {
     return () => window.removeEventListener("resize", checkMobile)
   }, [])
 
-  // Check if user needs onboarding
+  // Check if authenticated user needs onboarding
   useEffect(() => {
     if (user && !familyId && !familyLoading) {
       setShowOnboarding(true)
+    } else if (!user) {
+      setShowOnboarding(false)
     }
   }, [user, familyId, familyLoading])
 
-  // Load personalized data when available
+  // Load personalized data when available, or sample data for guests
   useEffect(() => {
     if (user && familyId && !familyDataLoading) {
       // Use real user data if available, otherwise fall back to sample data
@@ -121,8 +123,21 @@ export default function FamilyCalendarHome() {
         setTodayMeals(meals)
         setPendingChores(chores)
       }
+    } else if (!user || (!familyId && !familyLoading)) {
+      // Load sample data for guest users or users without families
+      const members = FamilyCalendarPresenter.formatFamilyMembers(FamilyCalendarController.getFamilyMembers())
+      const events = FamilyCalendarPresenter.getFormattedFamilyEventsByDay(2) // Monday
+      const insights = FamilyCalendarPresenter.getFormattedFamilyInsights()
+      const meals = FamilyCalendarPresenter.formatMealPlans(FamilyCalendarController.getMealPlansByDay(2))
+      const chores = FamilyCalendarPresenter.formatChoreAssignments(FamilyCalendarController.getPendingChores())
+
+      setFamilyMembers(members)
+      setFamilyEvents(events)
+      setFamilyInsights(insights)
+      setTodayMeals(meals)
+      setPendingChores(chores)
     }
-  }, [user, familyId, familyDataLoading, userFamilyMembers, userFamilyEvents, userMealPlans, userChoreAssignments])
+  }, [user, familyId, familyLoading, familyDataLoading, userFamilyMembers, userFamilyEvents, userMealPlans, userChoreAssignments])
 
   const handleEventClick = (event: any) => {
     // Normalize the event data to handle both calendar events and family events
@@ -153,14 +168,10 @@ export default function FamilyCalendarHome() {
   }
 
   const handleAddEvent = (date: Date, timeSlot?: string) => {
-    if (user) {
-      setSelectedDateForEvent(date)
-      setSelectedTimeForEvent(timeSlot || null)
-      setSelectedEventForEdit(null)
-      setShowEventForm(true)
-    } else {
-      setShowAuthModal(true)
-    }
+    setSelectedDateForEvent(date)
+    setSelectedTimeForEvent(timeSlot || null)
+    setSelectedEventForEdit(null)
+    setShowEventForm(true)
   }
 
   const handleEventFormSubmit = (eventData: Omit<CalendarEvent, "id">) => {
@@ -294,16 +305,10 @@ export default function FamilyCalendarHome() {
       <div className="mb-4 md:mb-6 flex-shrink-0">
         <button
           onClick={() => {
-            if (user) {
-              // User is authenticated, show add event form
-              setSelectedEventForEdit(null)
-              setSelectedDateForEvent(null)
-              setSelectedTimeForEvent(null)
-              setShowEventForm(true)
-            } else {
-              // User not authenticated, show auth modal
-              setShowAuthModal(true)
-            }
+            setSelectedEventForEdit(null)
+            setSelectedDateForEvent(null)
+            setSelectedTimeForEvent(null)
+            setShowEventForm(true)
           }}
           className="mb-3 md:mb-4 flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 px-3 md:px-4 py-2 md:py-3 text-white w-full hover:from-pink-600 hover:to-purple-700 transition-all text-sm md:text-base touch-manipulation active:scale-95"
         >
@@ -514,13 +519,13 @@ export default function FamilyCalendarHome() {
     </div>
   )
 
-  // Show loading state while checking authentication and family status
-  if (authLoading || familyLoading) {
+  // Show loading state while checking authentication and family status (only for authenticated users)
+  if (authLoading || (user && familyLoading)) {
     return <LoadingState />
   }
 
-  // Show onboarding if user needs to set up their family
-  if (showOnboarding) {
+  // Show onboarding if authenticated user needs to set up their family
+  if (user && showOnboarding) {
     return (
       <FamilySetup 
         onComplete={() => {
@@ -577,7 +582,13 @@ export default function FamilyCalendarHome() {
               className="rounded-full bg-white/10 backdrop-blur-sm pl-10 pr-4 py-2 text-white placeholder:text-white/70 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 w-32 lg:w-auto"
             />
           </div>
-          <Settings className="h-5 w-5 md:h-6 md:w-6 text-white drop-shadow-md" />
+          <button
+            onClick={() => setShowAuthModal(true)}
+            className="p-2 rounded-full hover:bg-white/20 transition-colors touch-manipulation active:scale-95"
+            title="Login / Register"
+          >
+            <Settings className="h-5 w-5 md:h-6 md:w-6 text-white drop-shadow-md" />
+          </button>
           <div className="flex items-center gap-1">
             {parents.slice(0, 2).map((parent, i) => (
               <div
