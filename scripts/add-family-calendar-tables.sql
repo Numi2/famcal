@@ -213,11 +213,8 @@ CREATE POLICY "Parents can update family member records in their family" ON fami
     )
   );
 
-CREATE POLICY "Users can insert family members in their family" ON family_members
+CREATE POLICY "Family creators can insert family members" ON family_members
   FOR INSERT WITH CHECK (
-    family_id IN (
-      SELECT family_id FROM family_members WHERE user_id = auth.uid()
-    ) OR 
     family_id IN (
       SELECT id FROM families WHERE created_by = auth.uid()
     )
