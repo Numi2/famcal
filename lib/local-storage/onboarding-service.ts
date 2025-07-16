@@ -46,17 +46,20 @@ export class LocalOnboardingService {
   static async createDefaultFamilyForUser(
     userId: string,
     email: string,
-    fullName: string
+    familyName: string
   ) {
     try {
       const family = await localStorageService.createFamily(
-        `${fullName}'s Family`,
+        familyName,
         'Welcome to your family calendar!'
       )
       
+      // Only add the current user as a member with their email
+      const userName = email.split('@')[0] || 'User'
+      
       await localStorageService.createFamilyMember({
         family_id: family.id,
-        name: fullName,
+        name: userName,
         email: email,
         role: 'parent',
         color: '#3b82f6'

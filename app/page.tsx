@@ -40,6 +40,7 @@ import { useLocalAuth } from "@/lib/local-storage/auth-context"
 import { useLocalFamilyId, useLocalCalendarEvents } from "@/lib/local-storage/hooks"
 import { useFamilyData } from "@/lib/hooks/use-family-data"
 import type { CalendarEvent } from "@/lib/calendar/types"
+import { ManageMembers } from "@/components/family-members/manage-members"
 
 export default function FamilyCalendarHome() {
   const { timezone } = useTimezone()
@@ -740,6 +741,11 @@ export default function FamilyCalendarHome() {
             <AdaptiveStats sidebarWidth={sidebarWidth} />
             <ResponsiveQuickActions sidebarWidth={sidebarWidth} />
             <ChildrenOverview />
+            {familyId && (
+              <div className="mt-6">
+                <ManageMembers familyId={familyId} />
+              </div>
+            )}
           </div>
         </div>
       )}
