@@ -1,6 +1,6 @@
 import { streamText } from 'ai'
 import { openai } from '@ai-sdk/openai'
-import * as tools from '@/lib/tools'
+import { calendarTools } from '@/lib/tools'
 import { NextRequest } from 'next/server'
 
 export async function POST(req: NextRequest) {
@@ -34,7 +34,7 @@ Be conversational and helpful. If a user asks to schedule something, help them f
     const result = await streamText({
       model: openai('gpt-4o'),
       messages: [systemMessage, ...messages],
-      tools,
+      tools: calendarTools,
       maxSteps: 5, // Allow the agent to chain multiple tool calls
       temperature: 0.7,
     })

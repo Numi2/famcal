@@ -5,9 +5,9 @@ import { User, Calendar, CheckCircle, Clock, Star, Award } from "lucide-react"
 import { FamilyCalendarController } from "@/lib/family/controller"
 
 export default function ChildrenOverview() {
-  const [children, setChildren] = useState([])
-  const [childrenSchedules, setChildrenSchedules] = useState({})
-  const [childrenChores, setChildrenChores] = useState({})
+  const [children, setChildren] = useState<any[]>([])
+  const [childrenSchedules, setChildrenSchedules] = useState<Record<string, any>>({})
+  const [childrenChores, setChildrenChores] = useState<Record<string, any>>({})
 
   useEffect(() => {
     const kids = FamilyCalendarController.getChildren()
@@ -19,7 +19,7 @@ export default function ChildrenOverview() {
     setChildrenChores(chores)
   }, [])
 
-  const getChildStats = (child) => {
+  const getChildStats = (child: any) => {
     const todayEvents = childrenSchedules[child.name]?.filter((event) => event.day === 2) || []
     const childChores = childrenChores[child.name] || []
     const completedChores = childChores.filter((chore) => chore.completed).length

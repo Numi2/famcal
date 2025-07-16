@@ -9,9 +9,9 @@ interface AdaptiveStatsProps {
 }
 
 export default function AdaptiveStats({ sidebarWidth }: AdaptiveStatsProps) {
-  const [budgetSummary, setBudgetSummary] = useState(null)
-  const [familyMembers, setFamilyMembers] = useState([])
-  const [weeklyEvents, setWeeklyEvents] = useState([])
+  const [budgetSummary, setBudgetSummary] = useState<any>(null)
+  const [familyMembers, setFamilyMembers] = useState<any[]>([])
+  const [weeklyEvents, setWeeklyEvents] = useState<any[]>([])
   const [completedChores, setCompletedChores] = useState(0)
   const [screenWidth, setScreenWidth] = useState(0)
 

@@ -79,7 +79,7 @@ export function FamilySetup({ onComplete }: FamilySetupProps) {
       if (validMembers.length === 0) {
         // Add the current user as a parent if no members
         validMembers.push({
-          full_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "Parent",
+          full_name: user.email?.split("@")[0] || "Parent",
           role: "parent",
           color: "bg-blue-500",
         })

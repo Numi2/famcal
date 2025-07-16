@@ -162,7 +162,7 @@ export default function SettingsPage() {
                     Account Created
                   </label>
                   <div className="text-sm text-gray-600">
-                    {new Date(user.created_at).toLocaleDateString('en-US', {
+                    {new Date().toLocaleDateString('en-US', {
                       timeZone: timezone,
                       year: 'numeric',
                       month: 'long',

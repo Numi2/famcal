@@ -37,7 +37,8 @@ import FamilyCalendarAssistant from "@/components/ai-assistant/chat-ui"
 import { FamilySetup } from "@/components/onboarding/family-setup"
 import { LoadingState } from "@/components/onboarding/loading-state"
 import { useLocalAuth } from "@/lib/local-storage/auth-context"
-import { useLocalFamilyId, useLocalFamilyData, useLocalCalendarEvents } from "@/lib/local-storage/hooks"
+import { useLocalFamilyId, useLocalCalendarEvents } from "@/lib/local-storage/hooks"
+import { useFamilyData } from "@/lib/hooks/use-family-data"
 import type { CalendarEvent } from "@/lib/calendar/types"
 
 export default function FamilyCalendarHome() {
@@ -70,13 +71,16 @@ export default function FamilyCalendarHome() {
   // Add auth hook
   const { user, isLoading: authLoading } = useLocalAuth()
   const { familyId, isLoading: familyLoading } = useLocalFamilyId()
-  const { 
-    family,
-    members: userFamilyMembers,
-    isLoading: familyDataLoading 
-  } = useLocalFamilyData(familyId)
   const {
-    events: userFamilyEvents,
+    familyMembers: userFamilyMembers,
+    familyEvents: userFamilyEvents,
+    mealPlans: userMealPlans,
+    choreAssignments: userChoreAssignments,
+    loading: familyDataLoading,
+    error: familyDataError,
+  } = useFamilyData()
+  const {
+    events,
     createEvent,
     updateEvent,
     deleteEvent,
