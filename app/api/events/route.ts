@@ -29,7 +29,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   
   const result = await db.getEvents(familyId, options)
   
-  return Response.json(result)
+  return NextResponse.json(result)
 })
 
 // POST /api/events - Create a new event
