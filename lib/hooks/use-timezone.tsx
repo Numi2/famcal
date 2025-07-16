@@ -6,7 +6,7 @@
 import React from "react"
 import { createContext, useContext, useEffect, useState } from 'react'
 import { getUserTimezone } from '@/lib/utils/timezone'
-import { useAuth } from '@/lib/auth/auth-context'
+import { useAuth } from '@/lib/auth/use-auth'
 
 interface TimezoneContextType {
   timezone: string
