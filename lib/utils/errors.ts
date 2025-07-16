@@ -20,7 +20,7 @@ export function handleApiError(error: unknown): NextResponse {
     return NextResponse.json(
       { 
         error: error.message, 
-        details: error.details 
+        ...(process.env.NODE_ENV === 'development' && { details: error.details })
       },
       { status: error.statusCode }
     )
