@@ -1,103 +1,113 @@
-# Family Calendar Personalization
+# FamCal Personalization & Local Storage
 
-This document explains how the Family Calendar app has been updated to provide personalized experiences for authenticated users.
+FamCal uses local storage for a personalized family calendar experience. All data is stored locally in your browser.
 
-## Overview
+## Features
 
-The app now supports user personalization through:
-- **User Authentication**: Supabase Auth integration
-- **Family Setup**: Onboarding flow for new users
-- **Personalized Data**: Real user data instead of sample data
-- **Family Management**: Users can create and manage their own families
+### Core Functionality
+- **Family Setup**: Quick onboarding - just enter your family name to get started
+- **Member Management**: Add family members anytime through the dashboard
+- **Event Management**: Create and manage family events
+- **Calendar Views**: Month, week, and day views
+- **Family Dashboard**: Overview of family activities
 
-## Key Features
+### Simplified Setup Process
 
-### 1. User Authentication
-- Users can sign up and sign in using email/password
-- Authentication state is managed globally
-- Protected routes and features
+1. **Initial Setup**: When you first visit FamCal, you'll be prompted to:
+   - Enter your family name (e.g., "The Smith Family")
+   - That's it! Your family calendar is created instantly
 
-### 2. Family Onboarding
-- New users are guided through family setup
-- Users can create their family and add members
-- Automatic family creation for new signups
+2. **Adding Family Members**: After setup, you can:
+   - Open the Family Dashboard (click the Dashboard button)
+   - Use the "Family Members" section to add members
+   - Set names, roles (parent/child), and colors for each member
 
-### 3. Personalized Data
-- Real family data is fetched from Supabase
-- Sample data is only shown as fallback
-- User-specific events, meals, and chores
+### Local Storage Architecture
 
-### 4. Family Management
-- Users can add family members
-- Each member has customizable properties
-- Role-based permissions (parent, child, caregiver)
+All data is stored locally using browser localStorage:
+- No server required
+- Data persists between sessions
+- Privacy-focused - your data never leaves your device
 
-## Implementation Details
+### Data Structure
 
-### Authentication Flow
-1. User signs up/signs in via AuthModal
-2. On successful signup, a default family is created
-3. User is redirected to onboarding if no family exists
-4. After onboarding, personalized data is loaded
+```typescript
+// Family
+{
+  id: string
+  name: string
+  description?: string
+  created_at: string
+}
 
-### Data Flow
-1. `useAuth()` - Manages authentication state
-2. `useFamilyId()` - Gets user's family ID
-3. `useFamilyData()` - Fetches personalized family data
-4. Components display real user data
+// Family Member
+{
+  id: string
+  family_id: string
+  name: string
+  email?: string
+  role: 'parent' | 'child'
+  color: string
+  created_at: string
+}
 
-### Database Schema
-- `profiles` table: User profiles with family_id
-- `families` table: Family information
-- `family_members` table: Family member details
-- `family_events` table: User-specific events
-- `meal_plans` table: Family meal plans
-- `chore_assignments` table: Family chores
+// Event
+{
+  id: string
+  family_id: string
+  title: string
+  start_date: string
+  end_date: string
+  // ... other fields
+}
+```
 
-## Usage
+## Usage Flow
 
-### For New Users
-1. Sign up with email and password
-2. Complete family setup onboarding
-3. Add family members and details
-4. Start using personalized calendar
+1. **First Visit**
+   - Sign in (or continue as guest)
+   - Enter family name when prompted
+   - Start using your calendar immediately
 
-### For Existing Users
-1. Sign in with email and password
-2. View personalized family data
-3. Manage family members and events
+2. **Adding Members**
+   - Click "Dashboard" in the top navigation
+   - Find the "Family Members" section
+   - Click "Add Member" to add family members
+   - Edit or remove members as needed
 
-## Technical Components
+3. **Creating Events**
+   - Click "+ Add Event" button
+   - Fill in event details
+   - Events are color-coded by family member
+
+## Technical Details
+
+### Key Components
+- `FamilySetup` - Simplified onboarding (name only)
+- `ManageMembers` - Add/edit/remove family members
+- `LocalStorageService` - Data persistence layer
+- `LocalOnboardingService` - Family creation logic
 
 ### Hooks
-- `useAuth()` - Authentication state
-- `useFamilyId()` - Family ID retrieval
-- `useFamilyData()` - Personalized data fetching
-
-### Services
-- `UserOnboardingService` - Family setup logic
-- `familyDb` - Database operations
-
-### Components
-- `AuthModal` - Sign up/sign in
-- `FamilySetup` - Onboarding flow
-- `LoadingState` - Loading indicators
+- `useLocalFamilyId` - Get current family ID
+- `useLocalFamilyMembers` - Manage family members
+- `useLocalCalendarEvents` - Manage calendar events
 
 ### API Endpoints
-- `/api/family/setup` - Family creation
+All functionality uses local storage - no API endpoints required!
 
-## Benefits
+## Benefits of Simplified Setup
 
-1. **Personalization**: Each user sees their own family data
-2. **Privacy**: Data is isolated per family
-3. **Scalability**: Supports multiple families
-4. **User Experience**: Smooth onboarding flow
-5. **Data Integrity**: Real-time synchronization
+1. **Faster Onboarding**: Get started in seconds with just a family name
+2. **Flexible Member Management**: Add members when you're ready, not during setup
+3. **Privacy First**: All data stays on your device
+4. **No Account Required**: Works immediately without registration
+5. **Offline Capable**: Works without internet connection
 
 ## Future Enhancements
 
-1. **Family Invitations**: Invite family members via email
-2. **Multiple Families**: Support for users in multiple families
-3. **Family Settings**: Customizable family preferences
-4. **Data Export**: Export family data
-5. **Advanced Permissions**: Role-based access control
+- Export/import family data
+- Multi-device sync (optional)
+- Family templates
+- Member permissions
+- Activity tracking
