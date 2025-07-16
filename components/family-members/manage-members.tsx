@@ -16,7 +16,7 @@ interface ManageMembersProps {
 }
 
 export function ManageMembers({ familyId }: ManageMembersProps) {
-  const { members, loading, error, createMember, updateMember, deleteMember } = useLocalFamilyMembers(familyId)
+  const { members, isLoading, createMember, updateMember, deleteMember } = useLocalFamilyMembers(familyId)
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [editingMember, setEditingMember] = useState<string | null>(null)
   const [formData, setFormData] = useState({
@@ -87,7 +87,7 @@ export function ManageMembers({ familyId }: ManageMembersProps) {
     }
   }
 
-  if (loading) return <div>Loading family members...</div>
+  if (isLoading) return <div>Loading family members...</div>
 
   return (
     <Card>
@@ -193,12 +193,6 @@ export function ManageMembers({ familyId }: ManageMembersProps) {
         </div>
       </CardHeader>
       <CardContent>
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
         {members.length === 0 ? (
           <p className="text-muted-foreground text-center py-8">
             No family members yet. Click "Add Member" to get started.

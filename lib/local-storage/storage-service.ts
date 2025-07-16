@@ -297,5 +297,27 @@ class LocalStorageService {
   }
 }
 
-// Export singleton instance
-export const localStorageService = new LocalStorageService();
+// Export a singleton instance
+const createLocalStorageService = () => {
+  if (typeof window === 'undefined') {
+    // Return a dummy service for SSR
+    return {
+      createFamily: async () => ({ id: '', name: '', created_at: new Date().toISOString() }),
+      getFamily: async () => null,
+      deleteFamily: async () => {},
+      createFamilyMember: async () => ({ id: '', family_id: '', name: '', role: 'parent' as const, color: '', created_at: new Date().toISOString() }),
+      getFamilyMembers: async () => [],
+      updateFamilyMember: async () => ({ id: '', family_id: '', name: '', role: 'parent' as const, color: '', created_at: new Date().toISOString() }),
+      deleteFamilyMember: async () => {},
+      createEvent: async () => ({ id: '', family_id: '', title: '', description: '', start_date: '', end_date: '', type: 'appointment' as const, created_at: new Date().toISOString() }),
+      getEvents: async () => [],
+      updateEvent: async () => ({ id: '', family_id: '', title: '', description: '', start_date: '', end_date: '', type: 'appointment' as const, created_at: new Date().toISOString() }),
+      deleteEvent: async () => {},
+      getCurrentFamily: async () => null,
+      initializeSampleData: async () => ({ id: '', name: '', created_at: new Date().toISOString() })
+    } as LocalStorageService;
+  }
+  return new LocalStorageService();
+};
+
+export const localStorageService = createLocalStorageService();
