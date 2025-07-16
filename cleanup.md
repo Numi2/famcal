@@ -5,24 +5,23 @@ This document outlines the cleanup tasks and fixes needed for the backend of the
 
 ## Critical Issues to Fix
 
-### 1. Environment Variable Validation
-**Problem**: No validation for required environment variables
+### 1. Environment Variable Type Safety
+**Problem**: Using non-null assertions (!) without runtime checks
 **Files**: `lib/supabase/server.ts`, `lib/supabase/client.ts`
-**Fix**: Add environment variable validation on app startup
+**Fix**: Add runtime validation for environment variables (even though they're in Vercel)
 ```typescript
-// Create lib/utils/env-validation.ts
-const requiredEnvVars = [
-  'NEXT_PUBLIC_SUPABASE_URL',
-  'NEXT_PUBLIC_SUPABASE_ANON_KEY',
-  'OPENAI_API_KEY'
-]
-
-export function validateEnv() {
-  const missing = requiredEnvVars.filter(key => !process.env[key])
-  if (missing.length > 0) {
-    throw new Error(`Missing required environment variables: ${missing.join(', ')}`)
+// Create lib/utils/env.ts
+export function getEnvVar(key: string): string {
+  const value = process.env[key]
+  if (!value) {
+    throw new Error(`Environment variable ${key} is not configured`)
   }
+  return value
 }
+
+// Usage:
+const supabaseUrl = getEnvVar('NEXT_PUBLIC_SUPABASE_URL')
+const supabaseKey = getEnvVar('NEXT_PUBLIC_SUPABASE_ANON_KEY')
 ```
 
 ### 2. Error Handling Inconsistencies
@@ -54,13 +53,17 @@ export function handleApiError(error: unknown) {
 }
 ```
 
-### 3. Missing TypeScript Types
-**Problem**: Using non-null assertions (!) without proper type guards
-**Files**: `lib/supabase/server.ts`, `lib/supabase/client.ts`
-**Fix**: Add proper type guards and error handling
+### 3. TypeScript Type Safety Issues
+**Problem**: Overuse of non-null assertions (!) throughout the codebase
+**Files**: `lib/supabase/server.ts`, `lib/supabase/client.ts`, `lib/supabase/family-client.ts`
+**Fix**: Use the proper type utilities and handle edge cases
 ```typescript
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Supabase configuration is missing')
+// Instead of: supabaseUrl!
+// Use: getEnvVar('NEXT_PUBLIC_SUPABASE_URL')
+
+// For optional values, use proper type guards:
+if (!user) {
+  throw new Error('User not authenticated')
 }
 ```
 
@@ -229,7 +232,7 @@ export async function GET() {
 ## Refactoring Priorities
 
 1. **High Priority**:
-   - Fix environment variable validation
+   - Add runtime type safety for environment variables
    - Add proper error handling
    - Implement input validation
    - Add rate limiting
