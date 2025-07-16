@@ -10,7 +10,7 @@ export function createServerTools(db: SecureFamilyDb, userId: string, familyId: 
     listEvents: tool({
       description: 'List family events with optional filters',
       parameters: z.object({
-        type: z.enum(['chore', 'meal', 'activity']).optional(),
+        type: z.enum(Object.values(EVENT_TYPES)).optional(),
         startDate: z.string().optional(),
         endDate: z.string().optional(),
         assignedTo: z.string().optional()
