@@ -3,7 +3,8 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useAuth } from "@/lib/auth/auth-context"
+import { useLocalAuth } from "@/lib/local-storage/auth-context"
+import { localStorageService } from "@/lib/local-storage/storage-service"
 import type { OnboardingData } from "@/lib/services/user-onboarding"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,7 +19,7 @@ interface FamilySetupProps {
 }
 
 export function FamilySetup({ onComplete }: FamilySetupProps) {
-  const { user } = useAuth()
+  const { user } = useLocalAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>("")
   const [step, setStep] = useState(1)
@@ -78,7 +79,7 @@ export function FamilySetup({ onComplete }: FamilySetupProps) {
       if (validMembers.length === 0) {
         // Add the current user as a parent if no members
         validMembers.push({
-          full_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "Parent",
+          full_name: user.email?.split("@")[0] || "Parent",
           role: "parent",
           color: "bg-blue-500",
         })

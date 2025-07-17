@@ -55,7 +55,7 @@ Remember: You're not just managing a calendar, you're helping create happy famil
 `
 
 // Family-specific AI tools
-const familyCalendarTools = [
+const familyCalendarTools: any = [
   {
     name: "getFamilyMembers",
     description: "Get information about all family members",
@@ -68,7 +68,7 @@ const familyCalendarTools = [
       try {
         return FamilyCalendarPresenter.formatFamilyMembers(FamilyCalendarController.getFamilyMembers())
       } catch (error) {
-        return { error: error.message }
+        return { error: error instanceof Error ? error.message : String(error) }
       }
     },
   },
@@ -84,7 +84,7 @@ const familyCalendarTools = [
       try {
         return FamilyCalendarPresenter.formatFamilyMembers(FamilyCalendarController.getChildren())
       } catch (error) {
-        return { error: error.message }
+        return { error: error instanceof Error ? error.message : String(error) }
       }
     },
   },
@@ -101,11 +101,11 @@ const familyCalendarTools = [
       },
       required: ["day"],
     },
-    handler: async ({ day }) => {
+    handler: async ({ day }: { day: number }) => {
       try {
         return FamilyCalendarPresenter.getFormattedFamilyEventsByDay(day)
       } catch (error) {
-        return { error: error.message }
+        return { error: error instanceof Error ? error.message : String(error) }
       }
     },
   },
@@ -122,11 +122,11 @@ const familyCalendarTools = [
       },
       required: [],
     },
-    handler: async ({ day }) => {
+    handler: async ({ day }: { day: number }) => {
       try {
         return FamilyCalendarPresenter.getFormattedChildrenSchedule(day)
       } catch (error) {
-        return { error: error.message }
+        return { error: error instanceof Error ? error.message : String(error) }
       }
     },
   },
@@ -143,12 +143,12 @@ const familyCalendarTools = [
       },
       required: ["day"],
     },
-    handler: async ({ day }) => {
+    handler: async ({ day }: { day: number }) => {
       try {
         const meals = FamilyCalendarController.getMealPlansByDay(day)
         return FamilyCalendarPresenter.formatMealPlans(meals)
       } catch (error) {
-        return { error: error.message }
+        return { error: error instanceof Error ? error.message : String(error) }
       }
     },
   },
@@ -179,11 +179,11 @@ const familyCalendarTools = [
       },
       required: [],
     },
-    handler: async (preferences) => {
+    handler: async (preferences: any) => {
       try {
         return FamilyCalendarPresenter.getFormattedMealSuggestions(preferences)
       } catch (error) {
-        return { error: error.message }
+        return { error: error instanceof Error ? error.message : String(error) }
       }
     },
   },
@@ -198,13 +198,13 @@ const familyCalendarTools = [
     handler: async () => {
       try {
         const choresByChild = FamilyCalendarController.getChoresByChild()
-        const formatted = {}
+        const formatted: Record<string, any> = {}
         Object.keys(choresByChild).forEach((childName) => {
           formatted[childName] = FamilyCalendarPresenter.formatChoreAssignments(choresByChild[childName])
         })
         return formatted
       } catch (error) {
-        return { error: error.message }
+        return { error: error instanceof Error ? error.message : String(error) }
       }
     },
   },
@@ -239,11 +239,11 @@ const familyCalendarTools = [
       },
       required: [],
     },
-    handler: async (filters) => {
+    handler: async (filters: any) => {
       try {
         return FamilyCalendarPresenter.getFormattedActivitySuggestions(filters)
       } catch (error) {
-        return { error: error.message }
+        return { error: error instanceof Error ? error.message : String(error) }
       }
     },
   },
@@ -260,7 +260,7 @@ const familyCalendarTools = [
         const appointments = FamilyCalendarController.getUpcomingMedicalAppointments()
         return FamilyCalendarPresenter.formatFamilyEvents(appointments)
       } catch (error) {
-        return { error: error.message }
+        return { error: error instanceof Error ? error.message : String(error) }
       }
     },
   },
@@ -276,7 +276,7 @@ const familyCalendarTools = [
       try {
         return FamilyCalendarPresenter.getFormattedFamilyInsights()
       } catch (error) {
-        return { error: error.message }
+        return { error: error instanceof Error ? error.message : String(error) }
       }
     },
   },
@@ -293,11 +293,11 @@ const familyCalendarTools = [
       },
       required: ["day"],
     },
-    handler: async ({ day }) => {
+    handler: async ({ day }: { day: number }) => {
       try {
         return FamilyCalendarPresenter.generateFamilyDaySummary(day)
       } catch (error) {
-        return { error: error.message }
+        return { error: error instanceof Error ? error.message : String(error) }
       }
     },
   },
@@ -313,7 +313,7 @@ const familyCalendarTools = [
       try {
         return FamilyCalendarPresenter.generateWeeklyFamilyReport()
       } catch (error) {
-        return { error: error.message }
+        return { error: error instanceof Error ? error.message : String(error) }
       }
     },
   },
@@ -329,7 +329,7 @@ const familyCalendarTools = [
       try {
         return FamilyCalendarController.getFamilyBudgetSummary()
       } catch (error) {
-        return { error: error.message }
+        return { error: error instanceof Error ? error.message : String(error) }
       }
     },
   },

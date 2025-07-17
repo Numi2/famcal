@@ -5,9 +5,9 @@ import { TrendingUp, Users, Calendar, DollarSign, CheckCircle } from "lucide-rea
 import { FamilyCalendarController } from "@/lib/family/controller"
 
 export default function FamilyStats() {
-  const [budgetSummary, setBudgetSummary] = useState(null)
-  const [familyMembers, setFamilyMembers] = useState([])
-  const [weeklyEvents, setWeeklyEvents] = useState([])
+  const [budgetSummary, setBudgetSummary] = useState<any>(null)
+  const [familyMembers, setFamilyMembers] = useState<any[]>([])
+  const [weeklyEvents, setWeeklyEvents] = useState<any[]>([])
   const [completedChores, setCompletedChores] = useState(0)
 
   useEffect(() => {

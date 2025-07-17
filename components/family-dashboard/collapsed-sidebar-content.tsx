@@ -10,7 +10,7 @@ interface CollapsedSidebarContentProps {
 }
 
 export default function CollapsedSidebarContent({ activeTab, onTabChange }: CollapsedSidebarContentProps) {
-  const [familyMembers, setFamilyMembers] = useState([])
+  const [familyMembers, setFamilyMembers] = useState<any[]>([])
   const [pendingChores, setPendingChores] = useState(0)
   const [todayEvents, setTodayEvents] = useState(0)
   const [insights, setInsights] = useState(0)

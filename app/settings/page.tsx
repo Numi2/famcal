@@ -6,7 +6,7 @@
 import { useState } from 'react'
 import { Settings, Globe, Clock, Save, ArrowLeft } from 'lucide-react'
 import { useTimezone } from '@/lib/hooks/use-timezone'
-import { useAuth } from '@/lib/auth/auth-context'
+import { useAuth } from '@/lib/auth/use-auth'
 import TimezoneSelector, { TimezoneInfo } from '@/components/ui/timezone-selector'
 
 export default function SettingsPage() {
@@ -162,7 +162,7 @@ export default function SettingsPage() {
                     Account Created
                   </label>
                   <div className="text-sm text-gray-600">
-                    {new Date(user.created_at).toLocaleDateString('en-US', {
+                    {new Date().toLocaleDateString('en-US', {
                       timeZone: timezone,
                       year: 'numeric',
                       month: 'long',

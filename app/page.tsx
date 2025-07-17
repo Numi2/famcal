@@ -36,8 +36,8 @@ import EventForm from "@/components/calendar/event-form"
 import FamilyCalendarAssistant from "@/components/ai-assistant/chat-ui"
 import { FamilySetup } from "@/components/onboarding/family-setup"
 import { LoadingState } from "@/components/onboarding/loading-state"
-import { useAuth } from "@/lib/auth/auth-context"
-import { useFamilyId } from "@/lib/hooks/use-family-id"
+import { useLocalAuth } from "@/lib/local-storage/auth-context"
+import { useLocalFamilyId, useLocalCalendarEvents } from "@/lib/local-storage/hooks"
 import { useFamilyData } from "@/lib/hooks/use-family-data"
 import type { CalendarEvent } from "@/lib/calendar/types"
 
@@ -69,8 +69,8 @@ export default function FamilyCalendarHome() {
   const [pendingChores, setPendingChores] = useState<any[]>([])
 
   // Add auth hook
-  const { user, loading: authLoading } = useAuth()
-  const { familyId, loading: familyLoading } = useFamilyId()
+  const { user, isLoading: authLoading } = useLocalAuth()
+  const { familyId, isLoading: familyLoading } = useLocalFamilyId()
   const {
     familyMembers: userFamilyMembers,
     familyEvents: userFamilyEvents,
@@ -79,6 +79,13 @@ export default function FamilyCalendarHome() {
     loading: familyDataLoading,
     error: familyDataError,
   } = useFamilyData()
+  const {
+    events,
+    createEvent,
+    updateEvent,
+    deleteEvent,
+    isLoading: eventsLoading
+  } = useLocalCalendarEvents(familyId)
   const [showOnboarding, setShowOnboarding] = useState(false)
 
   useEffect(() => {
