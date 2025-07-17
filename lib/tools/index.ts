@@ -1,2 +1,2 @@
-// Export all calendar tools
-export * from './calendar-db'
+// Export server tools factory
+export { createServerTools } from './server-tools'

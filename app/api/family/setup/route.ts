@@ -1,61 +1,44 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { cookies } from "next/headers"
+import { type NextRequest } from "next/server"
+import { getAuthenticatedUser } from "@/lib/auth/server"
 import { createClient } from "@/lib/supabase/server"
 import { UserOnboardingService } from "@/lib/services/user-onboarding"
+import { withErrorHandler, ApiError } from "@/lib/utils/errors"
+import { z } from "zod"
 
-export async function POST(request: NextRequest) {
-  try {
-    console.log("[SERVER] Processing family setup request")
-    
-    const supabase = await createClient()
+// Validation schema for family setup
+const familySetupSchema = z.object({
+  familyName: z.string().min(1).max(100),
+  familyDescription: z.string().max(500).optional(),
+  members: z.array(z.object({
+    full_name: z.string().min(1).max(100),
+    role: z.enum(['parent', 'child', 'caregiver']),
+    age: z.number().min(0).max(150).optional(),
+    grade: z.string().max(20).optional(),
+    school: z.string().max(200).optional(),
+    allergies: z.array(z.string()).optional(),
+    color: z.string().optional()
+  })).min(1).max(20)
+})
 
-    // Get the current user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
+export const POST = withErrorHandler(async (request: NextRequest) => {
+  const user = await getAuthenticatedUser()
+  const supabase = await createClient()
+  
+  const body = await request.json()
+  
+  // Validate request body
+  const validatedData = familySetupSchema.parse(body)
+  
+  // Create the family for the user
+  const family = await UserOnboardingService.createFamilyForUser(
+    user.id,
+    validatedData,
+    supabase
+  )
 
-    if (authError) {
-      console.error("[SERVER] Auth error:", authError.message)
-      return NextResponse.json({ error: "Authentication failed" }, { status: 401 })
-    }
-    
-    if (!user) {
-      console.error("[SERVER] No user found in session")
-      return NextResponse.json({ error: "Authentication failed" }, { status: 401 })
-    }
-
-    console.log("[SERVER] User authenticated:", user.id)
-
-    const body = await request.json()
-    const { familyName, familyDescription, members } = body
-
-    if (!familyName || !members || !Array.isArray(members) || members.length === 0) {
-      return NextResponse.json(
-        { error: "Missing required fields: familyName and members are required." },
-        { status: 400 },
-      )
-    }
-
-    // Create the family for the user, passing the server client
-    const family = await UserOnboardingService.createFamilyForUser(
-      user.id,
-      {
-        familyName,
-        familyDescription,
-        members,
-      },
-      supabase,
-    )
-
-    return NextResponse.json({
-      success: true,
-      family,
-      message: "Family created successfully",
-    })
-  } catch (error) {
-    console.error("[SERVER] Error setting up family:", error)
-    const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred."
-    return NextResponse.json({ error: `Failed to create family: ${errorMessage}` }, { status: 500 })
-  }
-}
+  return Response.json({
+    success: true,
+    family,
+    message: "Family created successfully"
+  })
+})
